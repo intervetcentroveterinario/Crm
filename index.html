@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Intervet CRM</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{--teal:#1A6B5A;--teal-dark:#134D40;--teal-light:#E8F5F1;--green-bg:#D1FAE5;--green-txt:#065F46;--red-bg:#FFE4E4;--red-txt:#991B1B;--yellow-bg:#FEF9C3;--yellow-txt:#854D0E;--blue-bg:#DBEAFE;--blue-txt:#1E40AF;--orange-bg:#FFF7ED;--orange-txt:#9A3412;--orange:#EA580C;--gray-bg:#F8FAFC;--gray-100:#F1F5F9;--gray-200:#E2E8F0;--gray-400:#94A3B8;--gray-600:#475569;--gray-800:#1E293B;--white:#FFFFFF;--shadow:0 1px 3px rgba(0,0,0,.08);--shadow-lg:0 10px 25px rgba(0,0,0,.12);}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--gray-bg);color:var(--gray-800);min-height:100vh;}
+.setup-screen{position:fixed;inset:0;background:var(--white);display:flex;align-items:center;justify-content:center;z-index:999;}
+.setup-screen.hidden{display:none;}
+.setup-box{background:var(--white);border-radius:20px;padding:44px;width:540px;box-shadow:var(--shadow-lg);border:1px solid var(--gray-200);}
+.setup-logo{font-size:38px;margin-bottom:14px;text-align:center;}
+.setup-box h2{font-size:21px;font-weight:700;color:var(--teal);text-align:center;margin-bottom:8px;}
+.setup-box p{font-size:13px;color:var(--gray-600);text-align:center;margin-bottom:22px;line-height:1.6;}
+.setup-steps{background:var(--gray-100);border-radius:12px;padding:16px 20px;margin-bottom:20px;}
+.setup-steps ol{padding-left:18px;}
+.setup-steps li{font-size:13px;color:var(--gray-600);margin-bottom:7px;line-height:1.5;}
+.setup-steps a{color:var(--teal);font-weight:600;}
+.setup-steps code{background:var(--gray-200);padding:1px 6px;border-radius:4px;font-family:'DM Mono',monospace;font-size:11px;}
+.setup-form{display:flex;flex-direction:column;gap:11px;}
+.setup-form label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-400);margin-bottom:4px;display:block;}
+.setup-form input{width:100%;padding:9px 13px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s;}
+.setup-form input:focus{border-color:var(--teal);}
+.setup-btn{margin-top:6px;padding:11px;background:var(--teal);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;}
+.setup-btn:hover{background:var(--teal-dark);}
+.setup-note{font-size:11px;color:var(--gray-400);text-align:center;margin-top:10px;}
+.header{background:var(--teal);padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.15);}
+.header-left{display:flex;align-items:center;gap:12px;}
+.header h1{color:#fff;font-size:17px;font-weight:700;}
+.header-badge{background:rgba(255,255,255,.15);color:#fff;font-size:11px;font-weight:500;padding:3px 10px;border-radius:20px;}
+.header-right{display:flex;gap:12px;align-items:center;}
+.sync-label{color:rgba(255,255,255,.85);font-size:12px;display:flex;align-items:center;gap:6px;}
+.sync-dot{width:8px;height:8px;border-radius:50%;}
+.sync-dot.online{background:#10B981;}.sync-dot.offline{background:#EF4444;animation:pulse 1s infinite;}.sync-dot.syncing{background:#F59E0B;animation:pulse .5s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.today-label{color:rgba(255,255,255,.65);font-size:12px;font-family:'DM Mono',monospace;}
+.config-btn{background:rgba(255,255,255,.15);border:none;color:#fff;cursor:pointer;border-radius:8px;padding:6px 10px;font-size:14px;}
+.config-btn:hover{background:rgba(255,255,255,.25);}
+.tabs-bar{background:var(--white);border-bottom:1px solid var(--gray-200);padding:0 28px;display:flex;}
+.tab{padding:12px 18px;font-size:13px;font-weight:500;color:var(--gray-400);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;display:flex;align-items:center;gap:7px;}
+.tab:hover{color:var(--teal);}
+.tab.active{color:var(--teal);border-bottom-color:var(--teal);font-weight:600;}
+.tab-count{background:var(--gray-100);color:var(--gray-600);font-size:11px;font-weight:600;padding:2px 7px;border-radius:10px;font-family:'DM Mono',monospace;}
+.tab.active .tab-count{background:var(--teal-light);color:var(--teal);}
+.tab-count.alert{background:#FEE2E2;color:#DC2626;}
+.main{padding:20px 28px;}
+.dashboard{display:none;}.dashboard.active{display:block;}
+.sheet{display:none;}.sheet.active{display:block;}
+.analytics-tab{display:none;}.analytics-tab.active{display:block;}
+.dash-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px;}
+.dash-card{background:var(--white);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow);border-left:4px solid var(--gray-200);}
+.dash-card.green{border-left-color:#10B981;}.dash-card.red{border-left-color:#EF4444;}.dash-card.yellow{border-left-color:#F59E0B;}.dash-card.blue{border-left-color:#3B82F6;}.dash-card.orange{border-left-color:var(--orange);}
+.dash-card .label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--gray-400);margin-bottom:5px;}
+.dash-card .value{font-size:28px;font-weight:700;font-family:'DM Mono',monospace;line-height:1;}
+.dash-card.green .value{color:#059669;}.dash-card.red .value{color:#DC2626;}.dash-card.yellow .value{color:#D97706;}.dash-card.blue .value{color:#2563EB;}.dash-card.orange .value{color:var(--orange);}
+.dash-card .sub{font-size:11px;color:var(--gray-400);margin-top:4px;}
+.internados-banner{background:var(--orange-bg);border:1.5px solid #FED7AA;border-radius:12px;padding:13px 17px;margin-bottom:16px;display:flex;align-items:center;gap:13px;}
+.internados-banner.hidden{display:none;}
+.internados-banner .banner-icon{font-size:24px;}
+.internados-banner .banner-text h3{font-size:13px;font-weight:700;color:var(--orange-txt);margin-bottom:2px;}
+.internados-banner .banner-text p{font-size:12px;color:#C2410C;}
+.dash-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--gray-400);margin-bottom:9px;margin-top:18px;}
+.dash-table{background:var(--white);border-radius:12px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:4px;}
+.dash-table table{width:100%;border-collapse:collapse;}
+.dash-table th{background:var(--gray-100);padding:8px 13px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-400);text-align:left;}
+.dash-table td{padding:9px 13px;font-size:13px;border-top:1px solid var(--gray-100);}
+.dash-table tr:hover td{background:var(--gray-bg);}
+/* ANALYTICS */
+.analytics-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
+.analytics-header h2{font-size:17px;font-weight:700;}
+.year-selector{display:flex;align-items:center;gap:8px;}
+.year-btn{background:var(--white);border:1px solid var(--gray-200);border-radius:7px;padding:6px 11px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--gray-600);}
+.year-btn:hover{background:var(--gray-100);}
+.year-display{font-size:15px;font-weight:700;color:var(--teal);font-family:'DM Mono',monospace;min-width:56px;text-align:center;}
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.chart-card{background:var(--white);border-radius:12px;padding:18px;box-shadow:var(--shadow);}
+.chart-card h3{font-size:13px;font-weight:700;color:var(--gray-800);margin-bottom:3px;}
+.chart-card .chart-sub{font-size:11px;color:var(--gray-400);margin-bottom:14px;}
+.chart-wrap{position:relative;height:210px;}
+.analytics-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;}
+.stat-table{background:var(--white);border-radius:12px;padding:18px;box-shadow:var(--shadow);}
+.stat-table h3{font-size:13px;font-weight:700;color:var(--gray-800);margin-bottom:13px;}
+.stat-row{display:flex;flex-direction:column;gap:4px;padding:7px 0;border-bottom:1px solid var(--gray-100);}
+.stat-row:last-child{border-bottom:none;}
+.stat-row-top{display:flex;justify-content:space-between;align-items:center;}
+.stat-label{color:var(--gray-600);font-size:12px;}
+.stat-val{font-weight:700;font-family:'DM Mono',monospace;color:var(--teal);font-size:12px;}
+.stat-bar-bg{background:var(--gray-100);border-radius:3px;height:5px;width:100%;}
+.stat-bar{height:5px;border-radius:3px;background:var(--teal);min-width:3px;}
+.stat-bar.blue{background:#3B82F6;}.stat-bar.orange{background:var(--orange);}
+/* TOOLBAR */
+.toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px;}
+.toolbar-left,.toolbar-right{display:flex;gap:8px;align-items:center;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;transition:all .15s;}
+.btn-primary{background:var(--teal);color:#fff;}.btn-primary:hover{background:var(--teal-dark);}
+.btn-ghost{background:var(--white);color:var(--gray-600);border:1px solid var(--gray-200);}.btn-ghost:hover{background:var(--gray-100);}
+.btn-export{background:#7C3AED;color:#fff;}.btn-export:hover{background:#6D28D9;}
+.search-box{display:flex;align-items:center;gap:8px;background:var(--white);border:1px solid var(--gray-200);border-radius:8px;padding:0 12px;}
+.search-box input{border:none;outline:none;font-size:13px;padding:7px 0;width:200px;background:transparent;font-family:'DM Sans',sans-serif;}
+/* TABLE */
+.table-wrap{background:var(--white);border-radius:12px;box-shadow:var(--shadow);overflow:hidden;overflow-x:auto;}
+table{width:100%;border-collapse:collapse;min-width:1200px;}
+thead th{background:var(--gray-800);color:#fff;padding:9px 11px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;text-align:left;white-space:nowrap;}
+thead th.center{text-align:center;}
+tbody tr{border-bottom:1px solid var(--gray-100);}
+tbody tr:last-child{border-bottom:none;}
+tr.status-internado{background:#FFF7ED!important;}
+tr.status-verde{background:var(--green-bg);}tr.status-vermelho{background:var(--red-bg);}
+tr.status-amarelo{background:var(--yellow-bg);}tr.status-azul{background:var(--blue-bg);}
+tr.status-neutro{background:var(--white);}tr:nth-child(even).status-neutro{background:var(--gray-bg);}
+td{padding:8px 11px;font-size:13px;vertical-align:middle;}td.center{text-align:center;}
+.date-auto{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;color:var(--teal);background:var(--teal-light);padding:2px 6px;border-radius:5px;white-space:nowrap;display:inline-block;}
+.date-auto.vencido{color:var(--red-txt);background:var(--red-bg);}.date-auto.urgente{color:var(--yellow-txt);background:var(--yellow-bg);}.date-auto.feito{color:var(--green-txt);background:var(--green-bg);}.date-auto.vazio{color:var(--gray-400);background:var(--gray-100);}.date-auto.bloqueado{color:#9A3412;background:#FFF7ED;}
+input[type=checkbox]{width:16px;height:16px;accent-color:var(--teal);cursor:pointer;}
+.ficha-badge{font-family:'DM Mono',monospace;font-size:11px;font-weight:600;color:var(--teal-dark);background:var(--teal-light);padding:2px 6px;border-radius:5px;}
+.badge-internado{display:inline-flex;align-items:center;gap:4px;background:var(--orange-bg);color:var(--orange-txt);border:1px solid #FED7AA;font-size:11px;font-weight:700;padding:2px 7px;border-radius:20px;white-space:nowrap;}
+.badge-alta{display:inline-flex;align-items:center;gap:4px;background:var(--green-bg);color:var(--green-txt);font-size:11px;font-weight:700;padding:2px 7px;border-radius:20px;white-space:nowrap;}
+.btn-internar{background:var(--orange-bg);color:var(--orange-txt);border:1px solid #FED7AA;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;white-space:nowrap;}
+.btn-internar:hover{background:#FED7AA;}
+.btn-alta{background:var(--green-bg);color:var(--green-txt);border:1px solid #86EFAC;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;white-space:nowrap;}
+.btn-alta:hover{background:#86EFAC;}
+.status-pill{display:inline-block;font-size:11px;font-weight:600;padding:2px 7px;border-radius:20px;white-space:nowrap;}
+.pill-sim{background:var(--green-bg);color:var(--green-txt);}.pill-nao{background:var(--red-bg);color:var(--red-txt);}.pill-pend{background:var(--yellow-bg);color:var(--yellow-txt);}
+.action-btns{display:flex;gap:2px;justify-content:center;flex-wrap:wrap;}
+.del-btn,.edit-btn,.hist-btn{background:none;border:none;cursor:pointer;font-size:13px;padding:3px 5px;border-radius:5px;transition:all .15s;}
+.del-btn:hover{background:#FEE2E2;}.edit-btn:hover{background:var(--teal-light);}.hist-btn:hover{background:var(--blue-bg);}
+.empty-row td{text-align:center;color:var(--gray-400);font-style:italic;padding:26px;}
+.legend{display:flex;gap:12px;align-items:center;font-size:11px;color:var(--gray-600);margin-bottom:11px;flex-wrap:wrap;}
+.legend-item{display:flex;align-items:center;gap:5px;}
+.legend-dot{width:9px;height:9px;border-radius:50%;}
+.dot-verde{background:#10B981;}.dot-vermelho{background:#EF4444;}.dot-amarelo{background:#F59E0B;}.dot-azul{background:#3B82F6;}.dot-internado{background:var(--orange);}
+/* MODALS */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--white);border-radius:16px;padding:26px 30px;width:560px;box-shadow:var(--shadow-lg);animation:slideUp .2s ease;max-height:92vh;overflow-y:auto;}
+.modal-lg{width:700px;}
+@keyframes slideUp{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal h2{font-size:17px;font-weight:700;margin-bottom:15px;color:var(--teal);}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+.form-full{grid-column:1/-1;}
+.form-group label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-400);margin-bottom:4px;}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:8px 11px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--gray-800);outline:none;transition:border-color .15s;}
+.form-group input:focus,.form-group select:focus{border-color:var(--teal);}
+.form-group textarea{resize:vertical;min-height:60px;}
+.modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;}
+.alta-warning{background:#FFF7ED;border:1px solid #FED7AA;border-radius:10px;padding:12px 15px;margin-bottom:15px;}
+.alta-warning h4{font-size:13px;font-weight:700;color:var(--orange-txt);margin-bottom:4px;}
+.alta-warning p{font-size:12px;color:#C2410C;line-height:1.5;}
+.alta-success{background:var(--green-bg);border:1px solid #86EFAC;border-radius:10px;padding:12px 15px;margin-bottom:15px;}
+.alta-success p{font-size:12px;color:var(--green-txt);line-height:1.6;}
+/* HISTORY */
+.hist-header{display:flex;align-items:center;gap:13px;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--gray-100);}
+.hist-avatar{width:48px;height:48px;border-radius:50%;background:var(--teal-light);display:flex;align-items:center;justify-content:center;font-size:22px;}
+.hist-info h3{font-size:15px;font-weight:700;color:var(--gray-800);}
+.hist-info p{font-size:12px;color:var(--gray-400);margin-top:2px;}
+.hist-item{display:flex;gap:13px;padding:12px 0;border-bottom:1px solid var(--gray-100);}
+.hist-item:last-child{border-bottom:none;}
+.hist-dot-wrap{display:flex;flex-direction:column;align-items:center;min-width:28px;}
+.hist-dot{width:11px;height:11px;border-radius:50%;background:var(--teal);margin-top:3px;flex-shrink:0;}
+.hist-dot.internado{background:var(--orange);}
+.hist-line{flex:1;width:2px;background:var(--gray-200);margin-top:3px;}
+.hist-content{flex:1;}
+.hist-content .hist-date{font-size:11px;font-family:'DM Mono',monospace;color:var(--gray-400);margin-bottom:3px;}
+.hist-content .hist-title{font-size:13px;font-weight:600;color:var(--gray-800);margin-bottom:3px;}
+.hist-content .hist-details{font-size:12px;color:var(--gray-600);line-height:1.5;}
+.hist-badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px;}
+.hist-badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;}
+.hb-green{background:var(--green-bg);color:var(--green-txt);}.hb-red{background:var(--red-bg);color:var(--red-txt);}.hb-orange{background:var(--orange-bg);color:var(--orange-txt);}.hb-blue{background:var(--blue-bg);color:var(--blue-txt);}.hb-gray{background:var(--gray-100);color:var(--gray-600);}
+.hist-empty{text-align:center;color:var(--gray-400);padding:24px;font-style:italic;font-size:13px;}
+.hist-status-bar{margin-top:14px;padding:11px 14px;background:var(--gray-100);border-radius:10px;font-size:13px;}
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--gray-800);color:#fff;padding:11px 18px;border-radius:10px;font-size:13px;font-weight:500;box-shadow:var(--shadow-lg);transform:translateY(100px);opacity:0;transition:all .3s ease;z-index:300;max-width:340px;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.green{background:#065F46;}.toast.orange{background:#9A3412;}
+</style>
+</head>
+<body>
+
+<div class="setup-screen" id="setup-screen">
+  <div class="setup-box">
+    <div class="setup-logo">🐾</div>
+    <h2>Configurar Sincronização</h2>
+    <p>Para funcionar em vários computadores, conecte ao Firebase.</p>
+    <div class="setup-steps"><ol>
+      <li>Acesse <a href="https://firebase.google.com" target="_blank">firebase.google.com</a> e faça login com o Google</li>
+      <li>Crie um projeto e vá em <strong>Realtime Database</strong> → Criar banco → Modo de teste</li>
+      <li>Copie a URL do banco (ex: <code>https://seu-projeto-rtdb.firebaseio.com</code>)</li>
+      <li>Cole abaixo e clique em Conectar</li>
+    </ol></div>
+    <div class="setup-form">
+      <div><label>URL do Firebase Realtime Database</label><input type="url" id="setup-url" placeholder="https://seu-projeto-default-rtdb.firebaseio.com"></div>
+      <button class="setup-btn" onclick="conectarFirebase()">🔗 Conectar e Salvar</button>
+    </div>
+    <p class="setup-note">Use a mesma URL em cada computador da clínica.</p>
+  </div>
+</div>
+
+<div class="header">
+  <div class="header-left">
+    <span style="font-size:21px">🐾</span>
+    <h1>Intervet</h1>
+    <span class="header-badge">CRM Follow-up</span>
+  </div>
+  <div class="header-right">
+    <span class="sync-label"><span class="sync-dot offline" id="sync-dot"></span><span id="sync-text">Conectando...</span></span>
+    <span class="today-label" id="todayLabel"></span>
+    <button class="config-btn" onclick="reconfigurar()">⚙️</button>
+  </div>
+</div>
+
+<div class="tabs-bar">
+  <div class="tab active" onclick="switchTab('dashboard')" id="tab-dashboard">📊 Dashboard <span class="tab-count" id="cnt-dashboard">—</span></div>
+  <div class="tab" onclick="switchTab('analytics')" id="tab-analytics">📈 Análises <span class="tab-count" id="cnt-analytics"></span></div>
+  <div class="tab" onclick="switchTab('geral')" id="tab-geral">🐾 Geral <span class="tab-count" id="cnt-geral">0</span></div>
+  <div class="tab" onclick="switchTab('leishmania')" id="tab-leishmania">🦟 Leishmania <span class="tab-count" id="cnt-leishmania">0</span></div>
+  <div class="tab" onclick="switchTab('oncologia')" id="tab-oncologia">🔬 Oncologia <span class="tab-count" id="cnt-oncologia">0</span></div>
+</div>
+
+<div class="main">
+
+  <!-- DASHBOARD -->
+  <div class="dashboard active" id="dashboard">
+    <div id="internados-banner" class="internados-banner hidden">
+      <div class="banner-icon">🏥</div>
+      <div class="banner-text"><h3 id="banner-title">Animais internados</h3><p>Esteira inicia automaticamente após a alta</p></div>
+    </div>
+    <div class="dash-grid">
+      <div class="dash-card orange"><div class="label">Internados</div><div class="value" id="d-internados">0</div><div class="sub">aguardando alta</div></div>
+      <div class="dash-card red"><div class="label">Atrasados</div><div class="value" id="d-atrasados">0</div><div class="sub">contatos vencidos</div></div>
+      <div class="dash-card yellow"><div class="label">Urgentes</div><div class="value" id="d-urgentes">0</div><div class="sub">vencem em 2 dias</div></div>
+      <div class="dash-card green"><div class="label">Concluídos</div><div class="value" id="d-concluidos">0</div><div class="sub">follow-up completo</div></div>
+      <div class="dash-card blue"><div class="label">Total</div><div class="value" id="d-total">0</div><div class="sub">pacientes ativos</div></div>
+    </div>
+    <div class="dash-section-title">🏥 Animais Internados</div>
+    <div class="dash-table"><table><thead><tr><th>Pet</th><th>Tutor</th><th>Aba</th><th>Veterinário</th><th>Internado desde</th><th>Observações</th><th>Ação</th></tr></thead><tbody id="dash-intern-body"><tr class="empty-row"><td colspan="7">Nenhum animal internado 🎉</td></tr></tbody></table></div>
+    <div class="dash-section-title">⚠️ Contatos Atrasados</div>
+    <div class="dash-table"><table><thead><tr><th>Pet</th><th>Tutor</th><th>Aba</th><th>Contato</th><th>Data Devida</th><th>Veterinário</th></tr></thead><tbody id="dash-atraso-body"><tr class="empty-row"><td colspan="6">Nenhum contato atrasado 🎉</td></tr></tbody></table></div>
+    <div class="dash-section-title">📋 Prontuários Pendentes</div>
+    <div class="dash-table"><table><thead><tr><th>Pet</th><th>Tutor</th><th>Aba</th><th>Veterinário</th><th>Data Atend.</th></tr></thead><tbody id="dash-pront-body"><tr class="empty-row"><td colspan="5">Todos prontuários OK 🎉</td></tr></tbody></table></div>
+  </div>
+
+  <!-- ANALYTICS -->
+  <div class="analytics-tab" id="analytics">
+    <div class="analytics-header">
+      <h2>📈 Análises &amp; Relatórios</h2>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="year-selector">
+          <button class="year-btn" onclick="changeYear(-1)">◀</button>
+          <span class="year-display" id="year-display">2026</span>
+          <button class="year-btn" onclick="changeYear(1)">▶</button>
+        </div>
+        <button class="btn btn-export" onclick="exportarPDF()">📄 Exportar PDF</button>
+      </div>
+    </div>
+    <div class="charts-grid">
+      <div class="chart-card"><h3>Pacientes Atendidos por Mês</h3><div class="chart-sub">Novos cadastros + retornos agendados</div><div class="chart-wrap"><canvas id="chart-mensal"></canvas></div></div>
+      <div class="chart-card"><h3>Status do Follow-up</h3><div class="chart-sub">Distribuição atual de todos os pacientes</div><div class="chart-wrap"><canvas id="chart-followup"></canvas></div></div>
+    </div>
+    <div class="analytics-grid">
+      <div class="stat-table"><h3>🔄 Taxa de Retorno por Mês</h3><div id="stat-retorno"></div></div>
+      <div class="stat-table"><h3>🏷️ Motivos Mais Frequentes</h3><div id="stat-motivos"></div></div>
+      <div class="stat-table"><h3>👨‍⚕️ Retornos por Veterinário</h3><div id="stat-vets"></div></div>
+    </div>
+    <div class="charts-grid">
+      <div class="chart-card"><h3>Pacientes por Aba</h3><div class="chart-sub">Geral vs Leishmania vs Oncologia</div><div class="chart-wrap"><canvas id="chart-abas"></canvas></div></div>
+      <div class="chart-card"><h3>Internações por Mês</h3><div class="chart-sub">Total de animais internados no ano</div><div class="chart-wrap"><canvas id="chart-internacoes"></canvas></div></div>
+    </div>
+  </div>
+
+  <!-- SHEETS -->
+  <div class="sheet" id="geral">
+    <div class="toolbar"><div class="toolbar-left"><div class="search-box"><span style="color:#94A3B8">🔍</span><input type="text" placeholder="Buscar..." oninput="filterTable('geral',this.value)"></div></div><div class="toolbar-right"><button class="btn btn-primary" onclick="openModal('geral')">＋ Novo Paciente</button></div></div>
+    <div class="legend"><div class="legend-item"><div class="legend-dot dot-internado"></div>Internado</div><div class="legend-item"><div class="legend-dot dot-azul"></div>Aguardando prazo</div><div class="legend-item"><div class="legend-dot dot-amarelo"></div>Vence em 2 dias</div><div class="legend-item"><div class="legend-dot dot-vermelho"></div>Atrasado</div><div class="legend-item"><div class="legend-dot dot-verde"></div>Concluído ✓</div></div>
+    <div class="table-wrap"><table><thead><tr><th>Cliente</th><th>Ficha</th><th>Pet</th><th>Motivo</th><th>Veterinário</th><th class="center">Situação</th><th class="center">Início</th><th class="center">D+1</th><th class="center">✓</th><th class="center">D+15</th><th class="center">✓</th><th class="center">D+30</th><th class="center">✓</th><th class="center">Agendou?</th><th class="center">Prontuário</th><th>Obs.</th><th></th></tr></thead><tbody id="body-geral"></tbody></table></div>
+  </div>
+  <div class="sheet" id="leishmania">
+    <div class="toolbar"><div class="toolbar-left"><div class="search-box"><span style="color:#94A3B8">🔍</span><input type="text" placeholder="Buscar..." oninput="filterTable('leishmania',this.value)"></div></div><div class="toolbar-right"><button class="btn btn-primary" onclick="openModal('leishmania')">＋ Novo Paciente</button></div></div>
+    <div class="legend"><div class="legend-item"><div class="legend-dot dot-internado"></div>Internado</div><div class="legend-item"><div class="legend-dot dot-azul"></div>Aguardando prazo</div><div class="legend-item"><div class="legend-dot dot-amarelo"></div>Vence em 2 dias</div><div class="legend-item"><div class="legend-dot dot-vermelho"></div>Atrasado</div><div class="legend-item"><div class="legend-dot dot-verde"></div>Concluído ✓</div></div>
+    <div class="table-wrap"><table><thead><tr><th>Cliente</th><th>Ficha</th><th>Pet</th><th>Motivo</th><th>Veterinário</th><th class="center">Situação</th><th class="center">Início</th><th class="center">D+1</th><th class="center">✓</th><th class="center">D+15</th><th class="center">✓</th><th class="center">D+30</th><th class="center">✓</th><th class="center">Agendou?</th><th class="center">Prontuário</th><th>Obs.</th><th></th></tr></thead><tbody id="body-leishmania"></tbody></table></div>
+  </div>
+  <div class="sheet" id="oncologia">
+    <div class="toolbar"><div class="toolbar-left"><div class="search-box"><span style="color:#94A3B8">🔍</span><input type="text" placeholder="Buscar..." oninput="filterTable('oncologia',this.value)"></div></div><div class="toolbar-right"><button class="btn btn-primary" onclick="openModal('oncologia')">＋ Novo Paciente</button></div></div>
+    <div class="legend"><div class="legend-item"><div class="legend-dot dot-internado"></div>Internado</div><div class="legend-item"><div class="legend-dot dot-azul"></div>Aguardando prazo</div><div class="legend-item"><div class="legend-dot dot-amarelo"></div>Vence em 2 dias</div><div class="legend-item"><div class="legend-dot dot-vermelho"></div>Atrasado</div><div class="legend-item"><div class="legend-dot dot-verde"></div>Concluído ✓</div></div>
+    <div class="table-wrap"><table><thead><tr><th>Cliente</th><th>Ficha</th><th>Pet</th><th>Motivo</th><th>Veterinário</th><th class="center">Situação</th><th class="center">Início</th><th class="center">D+1</th><th class="center">✓</th><th class="center">D+15</th><th class="center">✓</th><th class="center">D+30</th><th class="center">✓</th><th class="center">Agendou?</th><th class="center">Prontuário</th><th>Obs.</th><th></th></tr></thead><tbody id="body-oncologia"></tbody></table></div>
+  </div>
+
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal"><div class="modal"><h2>➕ Novo Paciente</h2><div class="form-grid"><div class="form-group form-full"><label>Cliente / Tutor *</label><input type="text" id="f-cliente" placeholder="Nome completo do tutor"></div><div class="form-group"><label>Ficha SimpleVet</label><input type="text" id="f-ficha" placeholder="Ex: 9122"></div><div class="form-group"><label>Data do Atendimento *</label><input type="date" id="f-data"></div><div class="form-group"><label>Nome do Pet *</label><input type="text" id="f-pet" placeholder="Ex: Nina"></div><div class="form-group"><label>Motivo</label><input type="text" id="f-motivo" placeholder="Ex: Retorno, Cirurgia..."></div><div class="form-group"><label>Veterinário</label><input type="text" id="f-vet" placeholder="Nome do veterinário"></div><div class="form-group form-full"><label>Animal está internado?</label><select id="f-internado"><option value="nao">Não — vai para casa hoje</option><option value="sim">Sim — está internado</option></select></div><div class="form-group form-full"><label>Observações</label><input type="text" id="f-obs" placeholder="Observações iniciais"></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="addPaciente()">Salvar</button></div></div></div>
+
+<div class="modal-overlay" id="modal-edit"><div class="modal"><h2>✏️ Editar Paciente</h2><div class="form-grid"><div class="form-group form-full"><label>Cliente / Tutor *</label><input type="text" id="e-cliente"></div><div class="form-group"><label>Ficha SimpleVet</label><input type="text" id="e-ficha"></div><div class="form-group"><label>Data do Atendimento</label><input type="date" id="e-data"></div><div class="form-group"><label>Nome do Pet *</label><input type="text" id="e-pet"></div><div class="form-group"><label>Motivo</label><input type="text" id="e-motivo"></div><div class="form-group"><label>Veterinário</label><input type="text" id="e-vet"></div><div class="form-group form-full"><label>Observações</label><input type="text" id="e-obs"></div><div class="form-group"><label>Agendou Retorno?</label><select id="e-agendou"><option value="">—</option><option value="Sim">Sim</option><option value="Não">Não</option><option value="Pendente">Pendente</option></select></div><div class="form-group"><label>Prontuário OK?</label><select id="e-prontuario"><option value="">—</option><option value="Sim">OK ✓</option><option value="Não">Não ✗</option><option value="Pendente">Pendente</option></select></div><div class="form-group" style="display:flex;align-items:center;gap:14px;padding-top:14px"><label style="margin:0;text-transform:none;font-size:13px;font-weight:500;color:var(--gray-600);display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="e-c1"> D+1</label><label style="margin:0;text-transform:none;font-size:13px;font-weight:500;color:var(--gray-600);display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="e-c15"> D+15</label><label style="margin:0;text-transform:none;font-size:13px;font-weight:500;color:var(--gray-600);display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="e-c30"> D+30</label></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeEditModal()">Cancelar</button><button class="btn btn-primary" onclick="saveEdit()">💾 Salvar</button></div></div></div>
+
+<div class="modal-overlay" id="modal-internar"><div class="modal"><h2>🏥 Internar Paciente</h2><div class="alta-warning"><h4>⚠️ Esteira pausada durante internação</h4><p>Os contatos D+1, D+15 e D+30 iniciarão automaticamente a partir da data da alta.</p></div><div class="form-grid"><div class="form-group form-full"><label>Data de Internação *</label><input type="date" id="i-data"></div><div class="form-group form-full"><label>Observações</label><input type="text" id="i-obs" placeholder="Ex: Cirurgia de urgência, monitoramento..."></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeInternarModal()">Cancelar</button><button class="btn btn-primary" style="background:var(--orange)" onclick="confirmarInternar()">🏥 Confirmar Internação</button></div></div></div>
+
+<div class="modal-overlay" id="modal-alta"><div class="modal"><h2>🏠 Dar Alta</h2><div class="alta-success"><p>✅ A esteira D+1, D+15 e D+30 será iniciada automaticamente a partir da data de alta.</p></div><div class="form-grid"><div class="form-group form-full"><label>Data da Alta *</label><input type="date" id="a-data"></div><div class="form-group form-full"><label>Observações da Alta</label><input type="text" id="a-obs" placeholder="Ex: Recuperação ótima, retorno em 15 dias..."></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeAltaModal()">Cancelar</button><button class="btn btn-primary" style="background:var(--green-txt)" onclick="confirmarAlta()">🏠 Confirmar Alta</button></div></div></div>
+
+<div class="modal-overlay" id="modal-hist"><div class="modal modal-lg"><h2>🐾 Histórico do Paciente</h2><div class="hist-header"><div class="hist-avatar" id="hist-avatar">🐾</div><div class="hist-info"><h3 id="hist-pet-name">—</h3><p id="hist-tutor">—</p></div></div><div id="hist-timeline"></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeHistModal()">Fechar</button></div></div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var SHEETS=['geral','leishmania','oncologia'];
+var data={geral:{},leishmania:{},oncologia:{}};
+var FB_URL='';
+var currentModal='',editSheet='',editIdx='',internSheet='',internIdx='';
+var analyticsYear=new Date().getFullYear();
+var charts={};
+var MESES=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+function fbUrl(p){return FB_URL.replace(/\/$/,'')+'/'+p+'.json';}
+function fbGet(p,cb){fetch(fbUrl(p)).then(function(r){return r.json();}).then(function(d){cb(null,d);}).catch(function(e){cb(e,null);});}
+function fbSet(p,v,cb){setSyncStatus('syncing');fetch(fbUrl(p),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(v)}).then(function(){setSyncStatus('online');if(cb)cb();}).catch(function(e){setSyncStatus('offline');if(cb)cb(e);});}
+function fbPush(p,v,cb){setSyncStatus('syncing');fetch(fbUrl(p),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(v)}).then(function(r){return r.json();}).then(function(d){setSyncStatus('online');if(cb)cb(null,d.name);}).catch(function(e){setSyncStatus('offline');if(cb)cb(e);});}
+function fbDelete(p,cb){setSyncStatus('syncing');fetch(fbUrl(p),{method:'DELETE'}).then(function(){setSyncStatus('online');if(cb)cb();}).catch(function(e){setSyncStatus('offline');if(cb)cb(e);});}
+function setSyncStatus(s){document.getElementById('sync-dot').className='sync-dot '+s;document.getElementById('sync-text').textContent=s==='online'?'Sincronizado':s==='syncing'?'Salvando...':'Sem conexão';}
+function startPolling(){setInterval(function(){SHEETS.forEach(function(s){fbGet(s,function(err,d){if(err){setSyncStatus('offline');return;}setSyncStatus('online');var n=d||{};if(JSON.stringify(n)!==JSON.stringify(data[s])){data[s]=n;renderSheet(s);renderDashboard();updateCounts();}});});},3000);}
+function conectarFirebase(){var u=document.getElementById('setup-url').value.trim();if(!u||!u.includes('firebaseio.com')){alert('URL inválida');return;}localStorage.setItem('intervet_fb_url',u);FB_URL=u;document.getElementById('setup-screen').classList.add('hidden');iniciarApp();}
+function reconfigurar(){if(confirm('Alterar URL do Firebase?')){document.getElementById('setup-url').value=FB_URL;document.getElementById('setup-screen').classList.remove('hidden');}}
+function today(){var d=new Date();d.setHours(0,0,0,0);return d;}
+function parseDate(s){if(!s)return null;var d=new Date(s+'T00:00:00');return isNaN(d)?null:d;}
+function addDays(s,n){var d=parseDate(s);if(!d)return null;d.setDate(d.getDate()+n);return d.toISOString().split('T')[0];}
+function fmtDate(s){if(!s)return'—';var p=s.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
+function diffDays(s){var d=parseDate(s);if(!d)return null;return Math.floor((d-today())/86400000);}
+function getDataInicio(p){return(p.internado==='sim')?p.dataAlta||null:p.dataAtend||null;}
+function getRowStatus(p){
+  if(p.internado==='sim'&&!p.dataAlta)return'internado';
+  var i=getDataInicio(p);if(!i)return'neutro';
+  var d1=addDays(i,1),d15=addDays(i,15),d30=addDays(i,30);
+  if(p.c1&&p.c15&&p.c30)return'verde';
+  if(!p.c1){var df=diffDays(d1);if(df<0)return'vermelho';if(df<=2)return'amarelo';return'azul';}
+  if(p.c1&&!p.c15){var df=diffDays(d15);if(df<0)return'vermelho';if(df<=2)return'amarelo';return'verde';}
+  if(p.c1&&p.c15&&!p.c30){var df=diffDays(d30);if(df<0)return'vermelho';if(df<=2)return'amarelo';return'verde';}
+  return'neutro';
+}
+function getDateClass(s,feito,bloqueado){if(bloqueado)return'bloqueado';if(feito)return'feito';if(!s)return'vazio';var df=diffDays(s);if(df===null)return'vazio';if(df<0)return'vencido';if(df<=2)return'urgente';return'';}
+function renderAll(){SHEETS.forEach(renderSheet);renderDashboard();updateCounts();}
+function renderSheet(sheet){
+  var tbody=document.getElementById('body-'+sheet);
+  var rows=Object.entries(data[sheet]||{});
+  if(!rows.length){tbody.innerHTML='<tr class="empty-row"><td colspan="17">Nenhum paciente cadastrado.</td></tr>';return;}
+  tbody.innerHTML=rows.map(function(e){
+    var key=e[0],p=e[1];
+    var bloq=(p.internado==='sim'&&!p.dataAlta);
+    var inicio=getDataInicio(p);
+    var d1=inicio?addDays(inicio,1):'',d15=inicio?addDays(inicio,15):'',d30=inicio?addDays(inicio,30):'';
+    var st=getRowStatus(p);
+    var cl1=getDateClass(d1,p.c1,bloq),cl15=getDateClass(d15,p.c15,bloq),cl30=getDateClass(d30,p.c30,bloq);
+    var sit=bloq?'<span class="badge-internado">🏥 Internado</span><br><small style="color:#C2410C;font-size:10px">'+fmtDate(p.dataInternacao)+'</small>':p.internado==='sim'&&p.dataAlta?'<span class="badge-alta">🏠 Alta</span><br><small style="color:#065F46;font-size:10px">'+fmtDate(p.dataAlta)+'</small>':'<span style="color:var(--gray-400);font-size:11px">Em casa</span>';
+    var btnI=bloq?'<button class="btn-alta" onclick="openAltaModal(\''+sheet+'\',\''+key+'\')">🏠 Alta</button>':'<button class="btn-internar" onclick="openInternarModal(\''+sheet+'\',\''+key+'\')">🏥 Internar</button>';
+    var iCell=bloq?'<span class="date-auto bloqueado">⏸</span>':inicio?'<span class="date-auto feito">'+fmtDate(inicio)+'</span>':'<span class="date-auto vazio">—</span>';
+    var ag=p.agendou==='Sim'?'<span class="status-pill pill-sim">Sim</span>':p.agendou==='Não'?'<span class="status-pill pill-nao">Não</span>':p.agendou==='Pendente'?'<span class="status-pill pill-pend">Pend.</span>':'<span style="color:var(--gray-400)">—</span>';
+    var pr=p.prontuario==='Sim'?'<span class="status-pill pill-sim">OK ✓</span>':p.prontuario==='Não'?'<span class="status-pill pill-nao">Não</span>':p.prontuario==='Pendente'?'<span class="status-pill pill-pend">Pend.</span>':'<span style="color:var(--gray-400)">—</span>';
+    return'<tr class="status-'+st+'">'
+      +'<td><strong style="font-size:12px">'+esc(p.cliente)+'</strong></td>'
+      +'<td class="center"><span class="ficha-badge">'+esc(p.ficha||'—')+'</span></td>'
+      +'<td><strong>'+esc(p.pet)+'</strong></td>'
+      +'<td style="font-size:11px;color:var(--gray-600)">'+esc(p.motivo||'')+'</td>'
+      +'<td style="font-size:12px">'+esc(p.vet||'')+'</td>'
+      +'<td class="center">'+sit+'</td>'
+      +'<td class="center">'+iCell+'</td>'
+      +'<td class="center"><span class="date-auto '+cl1+'">'+(bloq?'—':d1?fmtDate(d1):'—')+'</span></td>'
+      +'<td class="center"><input type="checkbox"'+(p.c1?' checked':'')+(bloq?' disabled':'')+' onchange="toggle(\''+sheet+'\',\''+key+'\',\'c1\',this.checked)"></td>'
+      +'<td class="center"><span class="date-auto '+cl15+'">'+(bloq?'—':d15?fmtDate(d15):'—')+'</span></td>'
+      +'<td class="center"><input type="checkbox"'+(p.c15?' checked':'')+(bloq?' disabled':'')+' onchange="toggle(\''+sheet+'\',\''+key+'\',\'c15\',this.checked)"></td>'
+      +'<td class="center"><span class="date-auto '+cl30+'">'+(bloq?'—':d30?fmtDate(d30):'—')+'</span></td>'
+      +'<td class="center"><input type="checkbox"'+(p.c30?' checked':'')+(bloq?' disabled':'')+' onchange="toggle(\''+sheet+'\',\''+key+'\',\'c30\',this.checked)"></td>'
+      +'<td class="center">'+ag+'</td>'
+      +'<td class="center">'+pr+'</td>'
+      +'<td style="font-size:11px;color:var(--gray-600);max-width:130px">'+esc(p.obs||'')+'</td>'
+      +'<td class="center"><div class="action-btns">'+btnI
+      +'<button class="hist-btn" onclick="openHistModal(\''+sheet+'\',\''+key+'\')" title="Histórico">📋</button>'
+      +'<button class="edit-btn" onclick="openEditModal(\''+sheet+'\',\''+key+'\')" title="Editar">✏️</button>'
+      +'<button class="del-btn" onclick="deletePaciente(\''+sheet+'\',\''+key+'\')" title="Remover">🗑️</button>'
+      +'</div></td></tr>';
+  }).join('');
+}
+function renderDashboard(){
+  var internados=0,atrasados=0,urgentes=0,concluidos=0,total=0;
+  var internRows=[],atrasoRows=[],prontRows=[];
+  SHEETS.forEach(function(s){
+    var label=s==='geral'?'🐾 Geral':s==='leishmania'?'🦟 Leishmania':'🔬 Oncologia';
+    Object.entries(data[s]||{}).forEach(function(e){
+      var key=e[0],p=e[1];if(!p.cliente)return;total++;
+      var st=getRowStatus(p),bloq=(p.internado==='sim'&&!p.dataAlta);
+      if(bloq)internados++;if(st==='vermelho')atrasados++;if(st==='amarelo')urgentes++;if(p.c1&&p.c15&&p.c30)concluidos++;
+      if(bloq)internRows.push('<tr><td><strong>'+esc(p.pet)+'</strong></td><td>'+esc(p.cliente)+'</td><td>'+label+'</td><td>'+esc(p.vet||'—')+'</td><td style="font-size:11px;color:var(--orange-txt);font-family:\'DM Mono\',monospace">'+fmtDate(p.dataInternacao)+'</td><td style="font-size:12px">'+esc(p.obsInternacao||'—')+'</td><td><button class="btn-alta" onclick="switchTab(\''+s+'\');setTimeout(function(){openAltaModal(\''+s+'\',\''+key+'\')},200)">🏠 Alta</button></td></tr>');
+      if(!bloq){var i=getDataInicio(p),d1=i?addDays(i,1):'',d15=i?addDays(i,15):'',d30=i?addDays(i,30):'';
+        if(!p.c1&&d1&&diffDays(d1)<0)atrasoRows.push('<tr><td><strong>'+esc(p.pet)+'</strong></td><td>'+esc(p.cliente)+'</td><td>'+label+'</td><td>D+1</td><td style="color:#DC2626;font-size:11px;font-family:\'DM Mono\',monospace">'+fmtDate(d1)+'</td><td>'+esc(p.vet||'—')+'</td></tr>');
+        if(p.c1&&!p.c15&&d15&&diffDays(d15)<0)atrasoRows.push('<tr><td><strong>'+esc(p.pet)+'</strong></td><td>'+esc(p.cliente)+'</td><td>'+label+'</td><td>D+15</td><td style="color:#DC2626;font-size:11px;font-family:\'DM Mono\',monospace">'+fmtDate(d15)+'</td><td>'+esc(p.vet||'—')+'</td></tr>');
+        if(p.c15&&!p.c30&&d30&&diffDays(d30)<0)atrasoRows.push('<tr><td><strong>'+esc(p.pet)+'</strong></td><td>'+esc(p.cliente)+'</td><td>'+label+'</td><td>D+30</td><td style="color:#DC2626;font-size:11px;font-family:\'DM Mono\',monospace">'+fmtDate(d30)+'</td><td>'+esc(p.vet||'—')+'</td></tr>');
+      }
+      if(p.prontuario==='Não')prontRows.push('<tr><td><strong>'+esc(p.pet)+'</strong></td><td>'+esc(p.cliente)+'</td><td>'+label+'</td><td>'+esc(p.vet||'—')+'</td><td style="font-size:11px;font-family:\'DM Mono\',monospace">'+fmtDate(p.dataAtend)+'</td></tr>');
+    });
+  });
+  document.getElementById('d-internados').textContent=internados;document.getElementById('d-atrasados').textContent=atrasados;document.getElementById('d-urgentes').textContent=urgentes;document.getElementById('d-concluidos').textContent=concluidos;document.getElementById('d-total').textContent=total;
+  var ban=document.getElementById('internados-banner');if(internados>0){ban.classList.remove('hidden');document.getElementById('banner-title').textContent=internados+' animal'+(internados>1?'is internados':' internado');}else ban.classList.add('hidden');
+  document.getElementById('dash-intern-body').innerHTML=internRows.length?internRows.join(''):'<tr class="empty-row"><td colspan="7">Nenhum animal internado 🎉</td></tr>';
+  document.getElementById('dash-atraso-body').innerHTML=atrasoRows.length?atrasoRows.join(''):'<tr class="empty-row"><td colspan="6">Nenhum contato atrasado 🎉</td></tr>';
+  document.getElementById('dash-pront-body').innerHTML=prontRows.length?prontRows.join(''):'<tr class="empty-row"><td colspan="5">Todos prontuários OK 🎉</td></tr>';
+}
+function updateCounts(){SHEETS.forEach(function(s){document.getElementById('cnt-'+s).textContent=Object.keys(data[s]||{}).length;});var n=0,i=0;SHEETS.forEach(function(s){Object.values(data[s]||{}).forEach(function(p){if(getRowStatus(p)==='vermelho')n++;if(p.internado==='sim'&&!p.dataAlta)i++;});});var el=document.getElementById('cnt-dashboard');el.textContent=n>0?n+' ⚠️':i>0?i+' 🏥':'✓';if(n>0)el.classList.add('alert');else el.classList.remove('alert');}
+
+// ANALYTICS
+function changeYear(d){analyticsYear+=d;document.getElementById('year-display').textContent=analyticsYear;renderAnalytics();}
+function getAllPacientes(){var a=[];SHEETS.forEach(function(s){Object.entries(data[s]||{}).forEach(function(e){a.push(Object.assign({},e[1],{_sheet:s,_key:e[0]}));});});return a;}
+function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+function renderAnalytics(){
+  var yr=analyticsYear,all=getAllPacientes();
+  var porMes=new Array(12).fill(0),internMes=new Array(12).fill(0),retornoMes=new Array(12).fill(0);
+  all.forEach(function(p){
+    if(p.dataAtend){var d=parseDate(p.dataAtend);if(d&&d.getFullYear()===yr)porMes[d.getMonth()]++;}
+    if(p.dataInternacao){var d=parseDate(p.dataInternacao);if(d&&d.getFullYear()===yr)internMes[d.getMonth()]++;}
+    if(p.agendou==='Sim'&&p.dataAtend){var d=parseDate(p.dataAtend);if(d&&d.getFullYear()===yr)retornoMes[d.getMonth()]++;}
+  });
+  var concl=0,pend=0,atr=0,intern=0;
+  all.forEach(function(p){var st=getRowStatus(p);if(p.c1&&p.c15&&p.c30)concl++;else if(st==='vermelho')atr++;else if(st==='internado')intern++;else pend++;});
+  var motivos={};all.forEach(function(p){if(p.motivo){var m=p.motivo.toUpperCase().trim();motivos[m]=(motivos[m]||0)+1;}});
+  var motSorted=Object.entries(motivos).sort(function(a,b){return b[1]-a[1];}).slice(0,7);
+  var maxMot=motSorted.length?motSorted[0][1]:1;
+  var vets={};all.forEach(function(p){if(p.vet&&p.agendou==='Sim'){var v=p.vet.trim();vets[v]=(vets[v]||0)+1;}});
+  var vetSorted=Object.entries(vets).sort(function(a,b){return b[1]-a[1];}).slice(0,7);
+  var maxVet=vetSorted.length?vetSorted[0][1]:1;
+  var porAba=[Object.keys(data.geral||{}).length,Object.keys(data.leishmania||{}).length,Object.keys(data.oncologia||{}).length];
+
+  destroyChart('chart-mensal');
+  charts['chart-mensal']=new Chart(document.getElementById('chart-mensal'),{type:'bar',data:{labels:MESES,datasets:[{label:'Pacientes',data:porMes,backgroundColor:'rgba(26,107,90,.75)',borderColor:'#1A6B5A',borderWidth:1.5,borderRadius:5},{label:'Retornos',data:retornoMes,backgroundColor:'rgba(59,130,246,.6)',borderColor:'#3B82F6',borderWidth:1.5,borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:11}}}},scales:{y:{beginAtZero:true,ticks:{stepSize:1,font:{size:11}},grid:{color:'rgba(0,0,0,.05)'}},x:{ticks:{font:{size:11}},grid:{display:false}}}}});
+
+  destroyChart('chart-followup');
+  charts['chart-followup']=new Chart(document.getElementById('chart-followup'),{type:'doughnut',data:{labels:['Concluído','Pendente','Atrasado','Internado'],datasets:[{data:[concl,pend,atr,intern],backgroundColor:['#10B981','#3B82F6','#EF4444','#EA580C'],borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11},padding:10}},tooltip:{callbacks:{label:function(c){var t=c.dataset.data.reduce(function(a,b){return a+b;},0);return c.label+': '+c.parsed+(t?' ('+Math.round(c.parsed/t*100)+'%)':'');}}}}}});
+
+  destroyChart('chart-abas');
+  charts['chart-abas']=new Chart(document.getElementById('chart-abas'),{type:'doughnut',data:{labels:['Geral','Leishmania','Oncologia'],datasets:[{data:porAba,backgroundColor:['#1A6B5A','#7C3AED','#EA580C'],borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11},padding:10}}}}});
+
+  destroyChart('chart-internacoes');
+  charts['chart-internacoes']=new Chart(document.getElementById('chart-internacoes'),{type:'bar',data:{labels:MESES,datasets:[{label:'Internações',data:internMes,backgroundColor:'rgba(234,88,12,.7)',borderColor:'#EA580C',borderWidth:1.5,borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1,font:{size:11}},grid:{color:'rgba(0,0,0,.05)'}},x:{ticks:{font:{size:11}},grid:{display:false}}}}});
+
+  var retHtml='';MESES.forEach(function(m,i){var tot=porMes[i],ret=retornoMes[i],pct=tot>0?Math.round(ret/tot*100):0;retHtml+='<div class="stat-row"><div class="stat-row-top"><span class="stat-label">'+m+' — '+ret+'/'+tot+'</span><span class="stat-val">'+pct+'%</span></div><div class="stat-bar-bg"><div class="stat-bar blue" style="width:'+pct+'%"></div></div></div>';});
+  document.getElementById('stat-retorno').innerHTML=retHtml||'<div class="hist-empty">Sem dados</div>';
+
+  var motHtml=motSorted.map(function(m){var pct=Math.round(m[1]/maxMot*100);return'<div class="stat-row"><div class="stat-row-top"><span class="stat-label">'+esc(m[0])+'</span><span class="stat-val">'+m[1]+'</span></div><div class="stat-bar-bg"><div class="stat-bar" style="width:'+pct+'%"></div></div></div>';}).join('');
+  document.getElementById('stat-motivos').innerHTML=motHtml||'<div class="hist-empty">Sem dados</div>';
+
+  var vetHtml=vetSorted.map(function(v){var pct=Math.round(v[1]/maxVet*100);return'<div class="stat-row"><div class="stat-row-top"><span class="stat-label">'+esc(v[0])+'</span><span class="stat-val">'+v[1]+'</span></div><div class="stat-bar-bg"><div class="stat-bar orange" style="width:'+pct+'%"></div></div></div>';}).join('');
+  document.getElementById('stat-vets').innerHTML=vetHtml||'<div class="hist-empty">Sem dados — informe o veterinário ao cadastrar</div>';
+}
+
+// EXPORT PDF
+function exportarPDF(){
+  var w=window.open('','_blank'),all=getAllPacientes(),yr=analyticsYear;
+  var porMes=new Array(12).fill(0);all.forEach(function(p){if(p.dataAtend){var d=parseDate(p.dataAtend);if(d&&d.getFullYear()===yr)porMes[d.getMonth()]++;}});
+  var concl=0,atr=0;all.forEach(function(p){if(p.c1&&p.c15&&p.c30)concl++;if(getRowStatus(p)==='vermelho')atr++;});
+  var taxa=all.length>0?Math.round(concl/all.length*100):0;
+  var rows=all.map(function(p){var st=getRowStatus(p);var stL=st==='verde'?'✅':st==='vermelho'?'🔴':st==='amarelo'?'🟡':st==='azul'?'🔵':st==='internado'?'🏥':'—';return'<tr><td>'+esc(p.pet)+'</td><td>'+esc(p.cliente)+'</td><td>'+esc(p._sheet==='geral'?'Geral':p._sheet==='leishmania'?'Leishmania':'Oncologia')+'</td><td>'+esc(p.vet||'—')+'</td><td>'+fmtDate(p.dataAtend)+'</td><td>'+stL+'</td><td>'+(p.agendou||'—')+'</td></tr>';}).join('');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Relatório Intervet '+yr+'</title><style>body{font-family:Arial,sans-serif;padding:32px;color:#1E293B;}h1{color:#1A6B5A;border-bottom:3px solid #1A6B5A;padding-bottom:12px;margin-bottom:20px;}h2{color:#134D40;margin-top:26px;font-size:15px;}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:18px 0;}.kpi{background:#F1F5F9;border-radius:8px;padding:14px;border-left:4px solid #1A6B5A;}.kpi .v{font-size:26px;font-weight:700;color:#1A6B5A;}.kpi .l{font-size:10px;color:#94A3B8;margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px;}.meses{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:12px 0;}.mes{background:#E8F5F1;border-radius:6px;padding:10px;text-align:center;}.mes .mv{font-size:18px;font-weight:700;color:#1A6B5A;}.mes .ml{font-size:10px;color:#64748B;}table{width:100%;border-collapse:collapse;margin-top:10px;}th{background:#1A6B5A;color:#fff;padding:8px 10px;font-size:11px;text-align:left;}td{padding:7px 10px;font-size:12px;border-bottom:1px solid #E2E8F0;}@media print{button{display:none;}}</style></head><body>');
+  w.document.write('<h1>🐾 Intervet — Relatório de Follow-up '+yr+'</h1><p style="color:#64748B;font-size:12px">Gerado em: '+new Date().toLocaleString('pt-BR')+'</p>');
+  w.document.write('<div class="kpis"><div class="kpi"><div class="l">Total Pacientes</div><div class="v">'+all.length+'</div></div><div class="kpi"><div class="l">Concluídos</div><div class="v">'+concl+'</div></div><div class="kpi"><div class="l">Taxa Conclusão</div><div class="v">'+taxa+'%</div></div><div class="kpi"><div class="l">Atrasados</div><div class="v" style="color:#DC2626">'+atr+'</div></div></div>');
+  w.document.write('<h2>Pacientes por Mês</h2><div class="meses">');
+  MESES.forEach(function(m,i){w.document.write('<div class="mes"><div class="mv">'+porMes[i]+'</div><div class="ml">'+m+'</div></div>');});
+  w.document.write('</div><h2>Lista Completa</h2><table><thead><tr><th>Pet</th><th>Tutor</th><th>Aba</th><th>Veterinário</th><th>Data</th><th>Status</th><th>Agendou?</th></tr></thead><tbody>'+rows+'</tbody></table>');
+  w.document.write('<br><button onclick="window.print()" style="background:#1A6B5A;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:14px;cursor:pointer">🖨️ Imprimir / Salvar PDF</button></body></html>');
+  w.document.close();
+}
+
+// HISTÓRICO
+function openHistModal(sheet,key){
+  var p=data[sheet][key];
+  document.getElementById('hist-pet-name').textContent=p.pet+' — '+p.cliente;
+  document.getElementById('hist-tutor').textContent='Ficha: '+(p.ficha||'—')+' | Vet: '+(p.vet||'—');
+  document.getElementById('hist-avatar').textContent=sheet==='leishmania'?'🦟':sheet==='oncologia'?'🔬':'🐾';
+  var events=[];
+  if(p.dataAtend)events.push({date:p.dataAtend,type:'atend',title:'Atendimento — '+(p.motivo||'Sem motivo'),details:'Veterinário: '+(p.vet||'—')+(p.obs?'<br>Obs: '+esc(p.obs):'')});
+  if(p.dataInternacao)events.push({date:p.dataInternacao,type:'intern',title:'Internação',details:p.obsInternacao?esc(p.obsInternacao):'Sem observações'});
+  if(p.dataAlta)events.push({date:p.dataAlta,type:'alta',title:'Alta Hospitalar',details:p.obsAlta?esc(p.obsAlta):'Sem observações'});
+  var inicio=getDataInicio(p);
+  if(inicio&&p.c1)events.push({date:addDays(inicio,1),type:'c1',title:'1º Contato realizado (D+1)',details:''});
+  if(inicio&&p.c15)events.push({date:addDays(inicio,15),type:'c15',title:'2º Contato realizado (D+15)',details:''});
+  if(inicio&&p.c30)events.push({date:addDays(inicio,30),type:'c30',title:'3º Contato realizado (D+30)',details:''});
+  if(p.agendou==='Sim')events.push({date:p.dataAtend,type:'retorno',title:'Retorno agendado ✓',details:''});
+  events.sort(function(a,b){return(a.date||'')>(b.date||'')?1:-1;});
+  var html='';
+  if(!events.length){html='<div class="hist-empty">Nenhum evento registrado ainda.</div>';}
+  else{events.forEach(function(ev,i){
+    var dC=ev.type==='intern'?'hist-dot internado':'hist-dot';
+    var badge=ev.type==='atend'?'<span class="hist-badge hb-blue">Atendimento</span>':ev.type==='intern'?'<span class="hist-badge hb-orange">Internação</span>':ev.type==='alta'?'<span class="hist-badge hb-green">Alta</span>':(ev.type==='c1'||ev.type==='c15'||ev.type==='c30')?'<span class="hist-badge hb-green">Contato ✓</span>':ev.type==='retorno'?'<span class="hist-badge hb-blue">Retorno</span>':'';
+    html+='<div class="hist-item"><div class="hist-dot-wrap"><div class="'+dC+'"></div>'+(i<events.length-1?'<div class="hist-line"></div>':'')+'</div><div class="hist-content"><div class="hist-date">'+fmtDate(ev.date)+'</div><div class="hist-title">'+ev.title+'</div>'+(ev.details?'<div class="hist-details">'+ev.details+'</div>':'')+'<div class="hist-badges">'+badge+'</div></div></div>';
+  });}
+  var st=getRowStatus(p);
+  html+='<div class="hist-status-bar"><strong>Status atual:</strong> '+(st==='verde'?'<span style="color:#059669">✅ Concluído</span>':st==='vermelho'?'<span style="color:#DC2626">🔴 Atrasado</span>':st==='amarelo'?'<span style="color:#D97706">🟡 Urgente</span>':st==='azul'?'<span style="color:#2563EB">🔵 Aguardando</span>':st==='internado'?'<span style="color:#EA580C">🏥 Internado</span>':'<span style="color:#94A3B8">—</span>')+'<span style="float:right;color:var(--gray-400)">Agendou retorno: <strong>'+(p.agendou||'—')+'</strong></span></div>';
+  document.getElementById('hist-timeline').innerHTML=html;
+  document.getElementById('modal-hist').classList.add('open');
+}
+function closeHistModal(){document.getElementById('modal-hist').classList.remove('open');}
+function toggle(sheet,key,field,val){data[sheet][key][field]=val;fbSet(sheet+'/'+key+'/'+field,val);renderSheet(sheet);renderDashboard();updateCounts();showToast(val?'✅ Contato marcado!':'↩️ Desmarcado','green');}
+function deletePaciente(sheet,key){if(!confirm('Remover '+data[sheet][key].cliente+'?'))return;delete data[sheet][key];fbDelete(sheet+'/'+key,function(){showToast('🗑️ Removido');});renderAll();}
+function openInternarModal(s,k){internSheet=s;internIdx=k;document.getElementById('i-data').value=new Date().toISOString().split('T')[0];document.getElementById('i-obs').value='';document.getElementById('modal-internar').classList.add('open');}
+function closeInternarModal(){document.getElementById('modal-internar').classList.remove('open');}
+function confirmarInternar(){var dt=document.getElementById('i-data').value;if(!dt){alert('Informe a data.');return;}var p=data[internSheet][internIdx];p.internado='sim';p.dataInternacao=dt;p.obsInternacao=document.getElementById('i-obs').value.trim();p.dataAlta='';p.c1=false;p.c15=false;p.c30=false;fbSet(internSheet+'/'+internIdx,p,function(){showToast('🏥 '+p.pet+' internado','orange');});renderAll();closeInternarModal();}
+function openAltaModal(s,k){internSheet=s;internIdx=k;document.getElementById('a-data').value=new Date().toISOString().split('T')[0];document.getElementById('a-obs').value='';document.getElementById('modal-alta').classList.add('open');}
+function closeAltaModal(){document.getElementById('modal-alta').classList.remove('open');}
+function confirmarAlta(){var dt=document.getElementById('a-data').value;if(!dt){alert('Informe a data.');return;}var p=data[internSheet][internIdx];p.dataAlta=dt;p.obsAlta=document.getElementById('a-obs').value.trim();p.c1=false;p.c15=false;p.c30=false;fbSet(internSheet+'/'+internIdx,p,function(){showToast('🏠 Alta! Esteira iniciada em '+fmtDate(dt),'green');});renderAll();closeAltaModal();}
+function openModal(s){currentModal=s;['cliente','ficha','pet','motivo','vet','obs'].forEach(function(f){document.getElementById('f-'+f).value='';});document.getElementById('f-data').value=new Date().toISOString().split('T')[0];document.getElementById('f-internado').value='nao';document.getElementById('modal').classList.add('open');setTimeout(function(){document.getElementById('f-cliente').focus();},100);}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+function addPaciente(){var cliente=document.getElementById('f-cliente').value.trim(),pet=document.getElementById('f-pet').value.trim(),dataAtend=document.getElementById('f-data').value,internado=document.getElementById('f-internado').value;if(!cliente||!pet||!dataAtend){alert('Preencha Cliente, Pet e Data.');return;}var p={cliente:cliente.toUpperCase(),ficha:document.getElementById('f-ficha').value.trim(),dataAtend:dataAtend,pet:pet.toUpperCase(),motivo:document.getElementById('f-motivo').value.trim(),vet:document.getElementById('f-vet').value.trim(),obs:document.getElementById('f-obs').value.trim(),internado:internado==='sim'?'sim':'nao',dataInternacao:internado==='sim'?dataAtend:'',dataAlta:'',c1:false,c15:false,c30:false,agendou:'',prontuario:'',criadoEm:new Date().toISOString()};fbPush(currentModal,p,function(err,key){if(err){alert('Erro ao salvar.');return;}data[currentModal][key]=p;renderAll();closeModal();showToast(internado==='sim'?'✅ Internado — esteira pausada':'✅ Cadastrado!',internado==='sim'?'orange':'green');});}
+function openEditModal(s,k){editSheet=s;editIdx=k;var p=data[s][k];document.getElementById('e-cliente').value=p.cliente||'';document.getElementById('e-ficha').value=p.ficha||'';document.getElementById('e-data').value=p.dataAtend||'';document.getElementById('e-pet').value=p.pet||'';document.getElementById('e-motivo').value=p.motivo||'';document.getElementById('e-vet').value=p.vet||'';document.getElementById('e-obs').value=p.obs||'';document.getElementById('e-agendou').value=p.agendou||'';document.getElementById('e-prontuario').value=p.prontuario||'';document.getElementById('e-c1').checked=!!p.c1;document.getElementById('e-c15').checked=!!p.c15;document.getElementById('e-c30').checked=!!p.c30;document.getElementById('modal-edit').classList.add('open');setTimeout(function(){document.getElementById('e-cliente').focus();},100);}
+function closeEditModal(){document.getElementById('modal-edit').classList.remove('open');}
+function saveEdit(){var cliente=document.getElementById('e-cliente').value.trim(),pet=document.getElementById('e-pet').value.trim();if(!cliente||!pet){alert('Preencha Cliente e Pet.');return;}var p=data[editSheet][editIdx];p.cliente=cliente.toUpperCase();p.ficha=document.getElementById('e-ficha').value.trim();p.dataAtend=document.getElementById('e-data').value;p.pet=pet.toUpperCase();p.motivo=document.getElementById('e-motivo').value.trim();p.vet=document.getElementById('e-vet').value.trim();p.obs=document.getElementById('e-obs').value.trim();p.agendou=document.getElementById('e-agendou').value;p.prontuario=document.getElementById('e-prontuario').value;p.c1=document.getElementById('e-c1').checked;p.c15=document.getElementById('e-c15').checked;p.c30=document.getElementById('e-c30').checked;fbSet(editSheet+'/'+editIdx,p,function(){showToast('✅ Salvo!','green');});renderAll();closeEditModal();}
+function switchTab(name){document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});document.querySelectorAll('.sheet,.dashboard,.analytics-tab').forEach(function(s){s.classList.remove('active');});document.getElementById('tab-'+name).classList.add('active');document.getElementById(name).classList.add('active');if(name==='dashboard')renderDashboard();if(name==='analytics'){analyticsYear=new Date().getFullYear();document.getElementById('year-display').textContent=analyticsYear;renderAnalytics();}}
+function filterTable(sheet,q){q=q.toLowerCase();document.querySelectorAll('#body-'+sheet+' tr').forEach(function(tr){if(tr.classList.contains('empty-row'))return;tr.style.display=tr.textContent.toLowerCase().includes(q)?'':'none';});}
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function showToast(msg,type){var t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type||'');t.classList.add('show');setTimeout(function(){t.classList.remove('show');},3000);}
+document.addEventListener('DOMContentLoaded',function(){
+  var d=new Date();var dias=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  document.getElementById('todayLabel').textContent=dias[d.getDay()]+', '+d.toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+  ['modal','modal-edit','modal-internar','modal-alta','modal-hist'].forEach(function(id){document.getElementById(id).addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});});
+  var saved=localStorage.getItem('intervet_fb_url');
+  if(saved){FB_URL=saved;document.getElementById('setup-screen').classList.add('hidden');iniciarApp();}
+});
+function iniciarApp(){var loaded=0;SHEETS.forEach(function(s){fbGet(s,function(err,d){if(!err){data[s]=d||{};setSyncStatus('online');}else setSyncStatus('offline');loaded++;if(loaded===SHEETS.length){renderAll();startPolling();}});});}
+</script>
+</body>
+</html>
