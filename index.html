@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Intervet — CRM Follow-up</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{
+  --brand:#2D5F3F;--brand-dark:#1E4229;--brand-light:#EAF4EE;
+  --lime:#8DC63F;--lime-light:#F0F9E0;
+  --orange:#F7941D;--orange-bg:#FFF7ED;--orange-txt:#9A3412;
+  --green-bg:#D1FAE5;--green-txt:#065F46;
+  --red-bg:#FFE4E4;--red-txt:#991B1B;
+  --yellow-bg:#FEF9C3;--yellow-txt:#854D0E;
+  --blue-bg:#DBEAFE;--blue-txt:#1E40AF;
+  --purple-bg:#F5F3FF;--purple-txt:#5B21B6;
+  --gray-bg:#F8FAFC;--gray-100:#F1F5F9;--gray-200:#E2E8F0;
+  --gray-400:#94A3B8;--gray-600:#475569;--gray-800:#1E293B;
+  --white:#FFFFFF;
+  --shadow:0 1px 3px rgba(0,0,0,.08);--shadow-lg:0 10px 25px rgba(0,0,0,.14);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--gray-bg);color:var(--gray-800);min-height:100vh;}
+
+/* SETUP */
+.setup-screen{position:fixed;inset:0;background:var(--white);display:flex;align-items:center;justify-content:center;z-index:999;}
+.setup-screen.hidden{display:none;}
+.setup-box{background:var(--white);border-radius:20px;padding:44px;width:540px;box-shadow:var(--shadow-lg);border:1px solid var(--gray-200);}
+.setup-logo{text-align:center;margin-bottom:16px;}
+.setup-logo img{height:70px;object-fit:contain;}
+.setup-box h2{font-size:20px;font-weight:700;color:var(--brand);text-align:center;margin-bottom:8px;}
+.setup-box p{font-size:13px;color:var(--gray-600);text-align:center;margin-bottom:22px;line-height:1.6;}
+.setup-steps{background:var(--gray-100);border-radius:12px;padding:16px 20px;margin-bottom:20px;}
+.setup-steps ol{padding-left:18px;}
+.setup-steps li{font-size:13px;color:var(--gray-600);margin-bottom:7px;line-height:1.5;}
+.setup-steps a{color:var(--brand);font-weight:600;}
+.setup-steps code{background:var(--gray-200);padding:1px 6px;border-radius:4px;font-family:'DM Mono',monospace;font-size:11px;}
+.setup-form{display:flex;flex-direction:column;gap:10px;}
+.setup-form label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-400);margin-bottom:3px;display:block;}
+.setup-form input{width:100%;padding:9px 13px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s;}
+.setup-form input:focus{border-color:var(--brand);}
+.setup-btn{margin-top:6px;padding:11px;background:var(--brand);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;}
+.setup-btn:hover{background:var(--brand-dark);}
+.setup-note{font-size:11px;color:var(--gray-400);text-align:center;margin-top:10px;}
+
+/* HEADER */
+.header{background:linear-gradient(135deg,#1E4229 0%,#2D5F3F 60%,#3a7a52 100%);padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,.2);}
+.header-left{display:flex;align-items:center;gap:12px;}
+.header-logo{height:34px;object-fit:contain;filter:brightness(0) invert(1);}
+.header h1{color:#fff;font-size:17px;font-weight:700;}
+.header-badge{background:rgba(255,255,255,.15);color:#fff;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;}
+.header-right{display:flex;gap:12px;align-items:center;}
+.sync-label{color:rgba(255,255,255,.85);font-size:12px;display:flex;align-items:center;gap:6px;}
+.sync-dot{width:8px;height:8px;border-radius:50%;}
+.sync-dot.online{background:#8DC63F;}.sync-dot.offline{background:#EF4444;animation:pulse 1s infinite;}.sync-dot.syncing{background:#F59E0B;animation:pulse .5s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.today-label{color:rgba(255,255,255,.65);font-size:12px;font-family:'DM Mono',monospace;}
+.config-btn{background:rgba(255,255,255,.15);border:none;color:#fff;cursor:pointer;border-radius:8px;padding:6px 10px;font-size:14px;}
+.config-btn:hover{background:rgba(255,255,255,.25);}
+
+/* TABS */
+.tabs-bar{background:var(--white);border-bottom:2px solid var(--gray-200);padding:0 28px;display:flex;overflow-x:auto;}
+.tab{padding:12px 16px;font-size:13px;font-weight:500;color:var(--gray-400);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s;display:flex;align-items:center;gap:7px;white-space:nowrap;}
+.tab:hover{color:var(--brand);}
+.tab.active{color:var(--brand);border-bottom-color:var(--lime);font-weight:700;}
+.tab-count{background:var(--gray-100);color:var(--gray-600);font-size:11px;font-weight:600;padding:2px 7px;border-radius:10px;font-family:'DM Mono',monospace;}
+.tab.active .tab-count{background:var(--lime-light);color:var(--brand);}
+.tab-count.alert{background:#FEE2E2;color:#DC2626;}
+.tab-count.warn{background:var(--yellow-bg);color:var(--yellow-txt);}
+
+/* MAIN */
+.main{padding:20px 28px;}
+.page{display:none;}.page.active{display:block;}
+
+/* HOJE — PROATIVO */
+.hoje-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
+.hoje-header h2{font-size:18px;font-weight:700;}
+.hoje-header .data-hoje{font-size:13px;color:var(--gray-400);font-family:'DM Mono',monospace;}
+
+.hoje-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px;}
+.hoje-card{background:var(--white);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow);border-left:4px solid var(--gray-200);cursor:pointer;transition:transform .15s;}
+.hoje-card:hover{transform:translateY(-2px);}
+.hoje-card.vermelho{border-left-color:#EF4444;}
+.hoje-card.amarelo{border-left-color:#F59E0B;}
+.hoje-card.laranja{border-left-color:var(--orange);}
+.hoje-card.verde{border-left-color:var(--lime);}
+.hoje-card.roxo{border-left-color:#7C3AED;}
+.hoje-card .card-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--gray-400);margin-bottom:5px;}
+.hoje-card .card-value{font-size:30px;font-weight:700;font-family:'DM Mono',monospace;line-height:1;}
+.hoje-card.vermelho .card-value{color:#DC2626;}
+.hoje-card.amarelo .card-value{color:#D97706;}
+.hoje-card.laranja .card-value{color:var(--orange);}
+.hoje-card.verde .card-value{color:#059669;}
+.hoje-card.roxo .card-value{color:#7C3AED;}
+.hoje-card .card-sub{font-size:11px;color:var(--gray-400);margin-top:4px;}
+
+/* CHURN RADAR */
+.churn-banner{background:linear-gradient(135deg,#991B1B,#DC2626);border-radius:12px;padding:16px 20px;margin-bottom:18px;display:flex;align-items:center;gap:16px;color:#fff;}
+.churn-banner.hidden{display:none;}
+.churn-banner .cb-icon{font-size:28px;}
+.churn-banner .cb-text h3{font-size:14px;font-weight:700;margin-bottom:3px;}
+.churn-banner .cb-text p{font-size:12px;opacity:.85;}
+.churn-count{background:rgba(255,255,255,.2);font-size:22px;font-weight:700;font-family:'DM Mono',monospace;padding:8px 16px;border-radius:10px;margin-left:auto;}
+
+/* INTERNADOS BANNER */
+.intern-banner{background:var(--orange-bg);border:1.5px solid #FED7AA;border-radius:12px;padding:13px 17px;margin-bottom:14px;display:flex;align-items:center;gap:13px;}
+.intern-banner.hidden{display:none;}
+.intern-banner .ib-icon{font-size:22px;}
+.intern-banner .ib-text h3{font-size:13px;font-weight:700;color:var(--orange-txt);margin-bottom:2px;}
+.intern-banner .ib-text p{font-size:12px;color:#C2410C;}
+
+.section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--gray-400);margin-bottom:9px;margin-top:20px;display:flex;align-items:center;gap:8px;}
+.section-title span{background:var(--gray-200);color:var(--gray-600);font-size:10px;padding:2px 7px;border-radius:10px;font-family:'DM Mono',monospace;}
+
+/* TABLES */
+.data-table{background:var(--white);border-radius:12px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:4px;}
+.data-table table{width:100%;border-collapse:collapse;}
+.data-table th{background:var(--gray-100);padding:9px 13px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-400);text-align:left;}
+.data-table td{padding:10px 13px;font-size:13px;border-top:1px solid var(--gray-100);vertical-align:middle;}
+.data-table tr:hover td{background:var(--gray-bg);}
+.empty-row td{text-align:center;color:var(--gray-400);font-style:italic;padding:24px;}
+
+/* PATIENT TABLE */
+.table-wrap{background:var(--white);border-radius:12px;box-shadow:var(--shadow);overflow:hidden;overflow-x:auto;}
+table.ptable{width:100%;border-collapse:collapse;min-width:1300px;}
+table.ptable thead th{background:var(--brand);color:#fff;padding:10px 11px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;text-align:left;white-space:nowrap;}
+table.ptable thead th.center{text-align:center;}
+table.ptable tbody tr{border-bottom:1px solid var(--gray-100);}
+table.ptable tbody tr:last-child{border-bottom:none;}
+tr.s-internado{background:#FFF7ED!important;}
+tr.s-verde{background:var(--green-bg);}
+tr.s-vermelho{background:var(--red-bg);}
+tr.s-amarelo{background:var(--yellow-bg);}
+tr.s-azul{background:var(--blue-bg);}
+tr.s-churn60{background:#FFF7ED;}
+tr.s-churn90{background:var(--red-bg);}
+tr.s-neutro{background:var(--white);}
+tr:nth-child(even).s-neutro{background:var(--gray-bg);}
+td{padding:8px 11px;font-size:13px;vertical-align:middle;}td.center{text-align:center;}
+
+/* BADGES & PILLS */
+.date-chip{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;padding:2px 7px;border-radius:5px;white-space:nowrap;display:inline-block;}
+.dc-ok{color:var(--green-txt);background:var(--green-bg);}
+.dc-vencido{color:var(--red-txt);background:var(--red-bg);}
+.dc-urgente{color:var(--yellow-txt);background:var(--yellow-bg);}
+.dc-futuro{color:var(--brand);background:var(--brand-light);}
+.dc-bloq{color:#9A3412;background:#FFF7ED;}
+.dc-na{color:var(--gray-400);background:var(--gray-100);}
+
+.ficha-chip{font-family:'DM Mono',monospace;font-size:11px;font-weight:600;color:var(--brand-dark);background:var(--brand-light);padding:2px 7px;border-radius:5px;}
+.novo-chip{background:var(--lime-light);color:var(--brand);font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;border:1px solid var(--lime);white-space:nowrap;}
+.tipo-chip{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;}
+.tc-consulta{background:#DBEAFE;color:#1E40AF;}
+.tc-retorno{background:var(--green-bg);color:var(--green-txt);}
+.tc-cirurgia{background:#F5F3FF;color:#5B21B6;}
+.tc-exame{background:#FEF9C3;color:#854D0E;}
+.tc-internacao{background:var(--orange-bg);color:var(--orange-txt);}
+.tc-emergencia{background:var(--red-bg);color:var(--red-txt);}
+
+.churn-chip{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;}
+.churn60{background:#FFF7ED;color:var(--orange-txt);border:1px solid #FED7AA;}
+.churn90{background:var(--red-bg);color:var(--red-txt);border:1px solid #FECACA;}
+.churn120{background:#1E293B;color:#fff;}
+
+.status-pill{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap;}
+.pill-sim{background:var(--green-bg);color:var(--green-txt);}
+.pill-nao{background:var(--red-bg);color:var(--red-txt);}
+.pill-pend{background:var(--yellow-bg);color:var(--yellow-txt);}
+
+.badge-intern{display:inline-flex;align-items:center;gap:4px;background:var(--orange-bg);color:var(--orange-txt);border:1px solid #FED7AA;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;}
+.badge-alta{display:inline-flex;align-items:center;gap:4px;background:var(--green-bg);color:var(--green-txt);font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;}
+
+input[type=checkbox]{width:16px;height:16px;accent-color:var(--brand);cursor:pointer;}
+
+/* ACTION BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;transition:all .15s;}
+.btn-primary{background:var(--brand);color:#fff;}.btn-primary:hover{background:var(--brand-dark);}
+.btn-ghost{background:var(--white);color:var(--gray-600);border:1px solid var(--gray-200);}.btn-ghost:hover{background:var(--gray-100);}
+.btn-export{background:#7C3AED;color:#fff;}.btn-export:hover{background:#6D28D9;}
+.btn-whats{background:#25D366;color:#fff;font-size:12px;padding:4px 9px;border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700;border:none;white-space:nowrap;}
+.btn-whats:hover{background:#128C7E;}
+.btn-internar{background:var(--orange-bg);color:var(--orange-txt);border:1px solid #FED7AA;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;}
+.btn-internar:hover{background:#FED7AA;}
+.btn-alta{background:var(--green-bg);color:var(--green-txt);border:1px solid #86EFAC;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;}
+.btn-alta:hover{background:#86EFAC;}
+.action-btns{display:flex;gap:2px;justify-content:center;flex-wrap:wrap;}
+.icon-btn{background:none;border:none;cursor:pointer;font-size:13px;padding:3px 5px;border-radius:5px;transition:all .15s;}
+.icon-btn:hover{background:var(--gray-100);}
+
+/* TOOLBAR */
+.toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.toolbar-left,.toolbar-right{display:flex;gap:8px;align-items:center;}
+.search-box{display:flex;align-items:center;gap:8px;background:var(--white);border:1px solid var(--gray-200);border-radius:8px;padding:0 12px;}
+.search-box input{border:none;outline:none;font-size:13px;padding:7px 0;width:200px;background:transparent;font-family:'DM Sans',sans-serif;}
+
+/* LEGEND */
+.legend{display:flex;gap:12px;align-items:center;font-size:11px;color:var(--gray-600);margin-bottom:11px;flex-wrap:wrap;}
+.legend-item{display:flex;align-items:center;gap:5px;}
+.ldot{width:9px;height:9px;border-radius:50%;}
+
+/* ANALYTICS */
+.anl-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
+.anl-header h2{font-size:17px;font-weight:700;}
+.year-sel{display:flex;align-items:center;gap:8px;}
+.year-btn{background:var(--white);border:1px solid var(--gray-200);border-radius:7px;padding:6px 11px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--gray-600);}
+.year-btn:hover{background:var(--gray-100);}
+.year-val{font-size:15px;font-weight:700;color:var(--brand);font-family:'DM Mono',monospace;min-width:56px;text-align:center;}
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.chart-card{background:var(--white);border-radius:12px;padding:18px;box-shadow:var(--shadow);}
+.chart-card h3{font-size:13px;font-weight:700;margin-bottom:3px;}
+.chart-card .csub{font-size:11px;color:var(--gray-400);margin-bottom:14px;}
+.chart-wrap{position:relative;height:210px;}
+.anl-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;}
+.stat-card{background:var(--white);border-radius:12px;padding:18px;box-shadow:var(--shadow);}
+.stat-card h3{font-size:13px;font-weight:700;margin-bottom:13px;}
+.stat-row{display:flex;flex-direction:column;gap:3px;padding:7px 0;border-bottom:1px solid var(--gray-100);}
+.stat-row:last-child{border-bottom:none;}
+.stat-top{display:flex;justify-content:space-between;}
+.stat-lbl{color:var(--gray-600);font-size:12px;}
+.stat-val{font-weight:700;font-family:'DM Mono',monospace;color:var(--brand);font-size:12px;}
+.stat-bar-bg{background:var(--gray-100);border-radius:3px;height:5px;width:100%;}
+.stat-bar{height:5px;border-radius:3px;background:var(--brand);min-width:3px;}
+.stat-bar.lime{background:var(--lime);}.stat-bar.orange{background:var(--orange);}.stat-bar.red{background:#EF4444;}
+
+/* MODALS */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--white);border-radius:16px;padding:26px 30px;width:580px;box-shadow:var(--shadow-lg);animation:slideUp .2s ease;max-height:92vh;overflow-y:auto;}
+.modal-lg{width:680px;}
+@keyframes slideUp{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal h2{font-size:17px;font-weight:700;margin-bottom:16px;color:var(--brand);}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+.form-full{grid-column:1/-1;}
+.form-group label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-400);margin-bottom:4px;}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:8px 11px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--gray-800);outline:none;transition:border-color .15s;}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--brand);}
+.form-group textarea{resize:vertical;min-height:60px;}
+.modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;}
+.info-box{border-radius:10px;padding:12px 15px;margin-bottom:14px;font-size:12px;line-height:1.6;}
+.info-box.orange{background:var(--orange-bg);border:1px solid #FED7AA;color:#C2410C;}
+.info-box.orange h4{font-size:13px;font-weight:700;color:var(--orange-txt);margin-bottom:4px;}
+.info-box.green{background:var(--green-bg);border:1px solid #86EFAC;color:var(--green-txt);}
+
+/* HISTORY MODAL */
+.hist-hdr{display:flex;align-items:center;gap:13px;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--gray-100);}
+.hist-avatar{width:48px;height:48px;border-radius:50%;background:var(--brand-light);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.hist-info h3{font-size:15px;font-weight:700;}
+.hist-info p{font-size:12px;color:var(--gray-400);margin-top:2px;}
+.hist-item{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--gray-100);}
+.hist-item:last-child{border-bottom:none;}
+.hist-dot-wrap{display:flex;flex-direction:column;align-items:center;min-width:26px;}
+.hdot{width:11px;height:11px;border-radius:50%;background:var(--brand);margin-top:3px;flex-shrink:0;}
+.hdot.red{background:#EF4444;}.hdot.orange{background:var(--orange);}.hdot.lime{background:var(--lime);}
+.hline{flex:1;width:2px;background:var(--gray-200);margin-top:3px;}
+.hist-content .hdate{font-size:11px;font-family:'DM Mono',monospace;color:var(--gray-400);margin-bottom:3px;}
+.hist-content .htitle{font-size:13px;font-weight:600;margin-bottom:3px;}
+.hist-content .hdetail{font-size:12px;color:var(--gray-600);line-height:1.5;}
+.hbadges{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px;}
+.hbadge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;}
+.hb-green{background:var(--green-bg);color:var(--green-txt);}
+.hb-blue{background:var(--blue-bg);color:var(--blue-txt);}
+.hb-orange{background:var(--orange-bg);color:var(--orange-txt);}
+.hb-purple{background:var(--purple-bg);color:var(--purple-txt);}
+.hist-status{margin-top:14px;padding:11px 14px;background:var(--gray-100);border-radius:10px;font-size:13px;display:flex;justify-content:space-between;align-items:center;}
+
+/* CHURN PAGE */
+.churn-filters{display:flex;gap:8px;margin-bottom:14px;}
+.churn-filter-btn{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--gray-200);background:var(--white);font-family:'DM Sans',sans-serif;color:var(--gray-600);transition:all .15s;}
+.churn-filter-btn.active{border-color:var(--brand);background:var(--brand-light);color:var(--brand);}
+
+/* DASHBOARD */
+.intern-banner{background:var(--orange-bg);border:1.5px solid #FED7AA;border-radius:12px;padding:13px 17px;margin-bottom:16px;display:flex;align-items:center;gap:13px;}
+.intern-banner.hidden{display:none;}
+.dash-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px;}
+.dkpi{background:#fff;border-radius:12px;padding:15px 17px;box-shadow:var(--shadow);border-left:4px solid var(--gray-200);}
+.dkpi.orange{border-left-color:var(--orange);}.dkpi.red{border-left-color:#EF4444;}.dkpi.yellow{border-left-color:#F59E0B;}.dkpi.lime{border-left-color:var(--lime);}.dkpi.brand{border-left-color:var(--brand);}
+.dkl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--gray-400);margin-bottom:4px;}
+.dkv{font-size:28px;font-weight:700;font-family:'DM Mono',monospace;line-height:1;}
+.dkpi.orange .dkv{color:var(--orange);}.dkpi.red .dkv{color:#DC2626;}.dkpi.yellow .dkv{color:#D97706;}.dkpi.lime .dkv{color:#5a9a1a;}.dkpi.brand .dkv{color:var(--brand);}
+.dks{font-size:11px;color:var(--gray-400);margin-top:3px;}
+
+.intern-banner{background:var(--orange-bg);border:1.5px solid #FED7AA;border-radius:12px;padding:13px 17px;margin-bottom:16px;display:flex;align-items:center;gap:13px;}
+.intern-banner.hidden{display:none;}
+.dash-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px;}
+.dkpi{background:#fff;border-radius:12px;padding:15px 17px;box-shadow:var(--shadow);border-left:4px solid var(--gray-200);}
+.dkpi.orange{border-left-color:var(--orange);}.dkpi.red{border-left-color:#EF4444;}.dkpi.yellow{border-left-color:#F59E0B;}.dkpi.lime{border-left-color:var(--lime);}.dkpi.brand{border-left-color:var(--brand);}
+.dkl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--gray-400);margin-bottom:4px;}
+.dkv{font-size:28px;font-weight:700;font-family:'DM Mono',monospace;line-height:1;}
+.dkpi.orange .dkv{color:var(--orange);}.dkpi.red .dkv{color:#DC2626;}.dkpi.yellow .dkv{color:#D97706;}.dkpi.lime .dkv{color:#5a9a1a;}.dkpi.brand .dkv{color:var(--brand);}
+.dks{font-size:11px;color:var(--gray-400);margin-top:3px;}
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--gray-800);color:#fff;padding:11px 18px;border-radius:10px;font-size:13px;font-weight:500;box-shadow:var(--shadow-lg);transform:translateY(100px);opacity:0;transition:all .3s ease;z-index:300;max-width:340px;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.green{background:#065F46;}.toast.orange{background:#9A3412;}.toast.red{background:#991B1B;}
+</style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div class="setup-screen" id="setup-screen">
+  <div class="setup-box">
+    <div class="setup-logo"><img src="https://static.wixstatic.com/media/a043c5_73fcea3703b44a76bbd343963bb59c2e~mv2.png/v1/crop/x_51,y_81,w_467,h_359/fill/w_518,h_398,al_c,lg_1,q_85,enc_avif,quality_auto/Logo%20Intervet%20PNG.png" onerror="this.outerHTML='🐾'"></div>
+    <h2>Configurar Sincronização</h2>
+    <p>Para funcionar em todos os computadores da clínica, conecte ao Firebase.</p>
+    <div class="setup-steps"><ol>
+      <li>Acesse <a href="https://firebase.google.com" target="_blank">firebase.google.com</a> e faça login</li>
+      <li>Crie um projeto → <strong>Realtime Database</strong> → Modo de teste</li>
+      <li>Copie a URL (ex: <code>https://seu-projeto-rtdb.firebaseio.com</code>)</li>
+      <li>Cole abaixo e clique em Conectar</li>
+    </ol></div>
+    <div class="setup-form">
+      <div><label>URL do Firebase Realtime Database</label><input type="url" id="setup-url" placeholder="https://seu-projeto-default-rtdb.firebaseio.com"></div>
+      <button class="setup-btn" onclick="conectarFirebase()">🔗 Conectar e Salvar</button>
+    </div>
+    <p class="setup-note">Use a mesma URL em cada computador da clínica.</p>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <img class="header-logo" src="https://static.wixstatic.com/media/a043c5_73fcea3703b44a76bbd343963bb59c2e~mv2.png/v1/crop/x_51,y_81,w_467,h_359/fill/w_518,h_398,al_c,lg_1,q_85,enc_avif,quality_auto/Logo%20Intervet%20PNG.png" onerror="this.style.display='none'">
+    <h1>Intervet</h1>
+    <span class="header-badge">CRM</span>
+  </div>
+  <div class="header-right">
+    <span class="sync-label"><span class="sync-dot offline" id="sync-dot"></span><span id="sync-text">Conectando...</span></span>
+    <span class="today-label" id="todayLabel"></span>
+    <button class="config-btn" onclick="reconfigurar()">⚙️</button>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs-bar">
+  <div class="tab active" onclick="switchTab('dashboard')" id="tab-dashboard">📊 Dashboard <span class="tab-count" id="cnt-dashboard">—</span></div>
+  <div class="tab" onclick="switchTab('hoje')" id="tab-hoje">🎯 Hoje <span class="tab-count" id="cnt-hoje">—</span></div>
+  <div class="tab" onclick="switchTab('geral')" id="tab-geral">🐾 Geral <span class="tab-count" id="cnt-geral">0</span></div>
+  <div class="tab" onclick="switchTab('leishmania')" id="tab-leishmania">🦟 Leishmania <span class="tab-count" id="cnt-leishmania">0</span></div>
+  <div class="tab" onclick="switchTab('oncologia')" id="tab-oncologia">🔬 Oncologia <span class="tab-count" id="cnt-oncologia">0</span></div>
+  <div class="tab" onclick="switchTab('churn')" id="tab-churn">📡 Radar de Churn <span class="tab-count" id="cnt-churn">0</span></div>
+  <div class="tab" onclick="switchTab('analytics')" id="tab-analytics">📈 Análises <span class="tab-count" id="cnt-analytics"></span></div>
+</div>
+
+<div class="main">
+
+<!-- ABA HOJE -->
+<!-- ═══════════ DASHBOARD ═══════════ -->
+<div class="page active" id="dashboard">
+  <div id="intern-banner" class="intern-banner hidden">
+    <span style="font-size:22px">🏥</span>
+    <div><strong id="intern-banner-title">Animais internados</strong><br><span style="font-size:12px;opacity:.85">Esteira inicia automaticamente após a alta</span></div>
+  </div>
+  <div class="dash-kpis">
+    <div class="dkpi orange"><div class="dkl">🏥 Internados</div><div class="dkv" id="dk-int">0</div><div class="dks">aguardando alta</div></div>
+    <div class="dkpi red"><div class="dkl">🔴 Atrasados</div><div class="dkv" id="dk-atr">0</div><div class="dks">contatos vencidos</div></div>
+    <div class="dkpi yellow"><div class="dkl">🟡 Urgentes</div><div class="dkv" id="dk-urg">0</div><div class="dks">vencem em 2 dias</div></div>
+    <div class="dkpi lime"><div class="dkl">✅ Concluídos</div><div class="dkv" id="dk-conc">0</div><div class="dks">follow-up completo</div></div>
+    <div class="dkpi brand"><div class="dkl">📋 Total</div><div class="dkv" id="dk-tot">0</div><div class="dks">pacientes ativos</div></div>
+  </div>
+  <div class="secao">🏥 Animais Internados <span class="secao-badge" id="db-intern-n">0</span></div>
+  <div class="task-table"><table>
+    <thead><tr><th>Pet</th><th>Tutor</th><th>WhatsApp</th><th>Aba</th><th>Veterinário</th><th>Internado desde</th><th>Obs.</th><th>Ação</th></tr></thead>
+    <tbody id="db-intern-body"><tr class="task-empty"><td colspan="8">Nenhum animal internado 🎉</td></tr></tbody>
+  </table></div>
+  <div class="secao">⚠️ Contatos Atrasados <span class="secao-badge" id="db-atr-n">0</span></div>
+  <div class="task-table"><table>
+    <thead><tr><th>Pet</th><th>Tutor</th><th>Aba</th><th>Contato</th><th>Data Devida</th><th>Veterinário</th></tr></thead>
+    <tbody id="db-atr-body"><tr class="task-empty"><td colspan="6">Nenhum contato atrasado 🎉</td></tr></tbody>
+  </table></div>
+  <div class="secao">📋 Prontuários Pendentes <span class="secao-badge" id="db-pront-n">0</span></div>
+  <div class="task-table"><table>
+    <thead><tr><th>Pet</th><th>Tutor</th><th>Aba</th><th>Veterinário</th><th>Data Atend.</th></tr></thead>
+    <tbody id="db-pront-body"><tr class="task-empty"><td colspan="5">Todos prontuários OK 🎉</td></tr></tbody>
+  </table></div>
+</div>
+
+<div class="page" id="hoje">
+  <div class="hoje-header">
+    <h2>🎯 O que fazer hoje</h2>
+    <span class="data-hoje" id="data-hoje-label"></span>
+  </div>
+
+  <div id="churn-banner" class="churn-banner hidden">
+    <div class="cb-icon">🚨</div>
+    <div class="cb-text"><h3>Clientes em risco de abandono!</h3><p>Esses tutores não voltam há mais de 60 dias — ligue antes que os percamos</p></div>
+    <div class="churn-count" id="churn-banner-count">0</div>
+  </div>
+
+  <div id="intern-banner" class="intern-banner hidden">
+    <div class="ib-icon">🏥</div>
+    <div class="ib-text"><h3 id="intern-banner-title">Animais internados</h3><p>Esteira iniciada automaticamente após a alta</p></div>
+  </div>
+
+  <div class="hoje-grid">
+    <div class="hoje-card vermelho" onclick="switchTab('geral')"><div class="card-label">Atrasados</div><div class="card-value" id="h-atrasados">0</div><div class="card-sub">contatos vencidos</div></div>
+    <div class="hoje-card amarelo" onclick="switchTab('geral')"><div class="card-label">Urgentes hoje</div><div class="card-value" id="h-urgentes">0</div><div class="card-sub">vencem em 2 dias</div></div>
+    <div class="hoje-card laranja" onclick="switchTab('hoje')"><div class="card-label">Internados</div><div class="card-value" id="h-internados">0</div><div class="card-sub">aguardando alta</div></div>
+    <div class="hoje-card roxo" onclick="switchTab('churn')"><div class="card-label">Risco Churn</div><div class="card-value" id="h-churn">0</div><div class="card-sub">60+ dias sem voltar</div></div>
+  </div>
+
+  <div class="section-title">🔴 Contatos Atrasados — Ligar Agora <span id="cnt-atraso-hoje">0</span></div>
+  <div class="data-table"><table>
+    <thead><tr><th>Pet</th><th>Tutor</th><th>Telefone</th><th>Aba</th><th>Contato</th><th>Venceu em</th><th>Veterinário</th><th>Ação</th></tr></thead>
+    <tbody id="tbody-atrasados"><tr class="empty-row"><td colspan="8">Nenhum contato atrasado 🎉</td></tr></tbody>
+  </table></div>
+
+  <div class="section-title">🟡 Vence nos Próximos 2 Dias <span id="cnt-urgente-hoje">0</span></div>
+  <div class="data-table"><table>
+    <thead><tr><th>Pet</th><th>Tutor</th><th>Telefone</th><th>Aba</th><th>Contato</th><th>Vence em</th><th>Veterinário</th><th>Ação</th></tr></thead>
+    <tbody id="tbody-urgentes"><tr class="empty-row"><td colspan="8">Nenhum contato urgente no momento 👍</td></tr></tbody>
+  </table></div>
+
+  <div class="section-title">🏥 Animais Internados <span id="cnt-intern-hoje">0</span></div>
+  <div class="data-table"><table>
+    <thead><tr><th>Pet</th><th>Tutor</th><th>Telefone</th><th>Aba</th><th>Veterinário</th><th>Internado desde</th><th>Observações</th><th>Ação</th></tr></thead>
+    <tbody id="tbody-internados"><tr class="empty-row"><td colspan="8">Nenhum animal internado 🎉</td></tr></tbody>
+  </table></div>
+
+  <div class="section-title">📋 Prontuários Pendentes <span id="cnt-pront-hoje">0</span></div>
+  <div class="data-table"><table>
+    <thead><tr><th>Pet</th><th>Tutor</th><th>Aba</th><th>Veterinário</th><th>Data Atend.</th></tr></thead>
+    <tbody id="tbody-prontuarios"><tr class="empty-row"><td colspan="5">Todos prontuários OK 🎉</td></tr></tbody>
+  </table></div>
+</div>
+
+<!-- SHEETS -->
+<div class="page" id="geral">
+  <div class="toolbar">
+    <div class="toolbar-left"><div class="search-box"><span style="color:#94A3B8">🔍</span><input type="text" placeholder="Buscar cliente ou pet..." oninput="filterTable('geral',this.value)"></div></div>
+    <div class="toolbar-right"><button class="btn btn-primary" onclick="openModal('geral')">＋ Novo Paciente</button></div>
+  </div>
+  <div class="legend">
+    <div class="legend-item"><div class="ldot" style="background:var(--orange)"></div>Internado</div>
+    <div class="legend-item"><div class="ldot" style="background:#3B82F6"></div>Aguardando prazo</div>
+    <div class="legend-item"><div class="ldot" style="background:#F59E0B"></div>Vence em 2 dias</div>
+    <div class="legend-item"><div class="ldot" style="background:#EF4444"></div>Atrasado</div>
+    <div class="legend-item"><div class="ldot" style="background:#10B981"></div>Concluído</div>
+  </div>
+  <div class="table-wrap" id="wrap-geral"><table class="ptable"><thead><tr>
+    <th>Cliente</th><th>Tel/WhatsApp</th><th>Ficha</th><th>Pet</th><th>Tipo</th><th>Veterinário</th>
+    <th class="center">Situação</th><th class="center">Início</th>
+    <th class="center">D+1</th><th class="center">✓</th>
+    <th class="center">D+2</th><th class="center">✓</th>
+    <th class="center">D+15</th><th class="center">✓</th>
+    <th class="center">D+30</th><th class="center">✓</th>
+    <th class="center">Agendou?</th><th class="center">Pront.</th><th>Obs.</th><th></th>
+  </tr></thead><tbody id="body-geral"></tbody></table></div>
+</div>
+
+<div class="page" id="leishmania">
+  <div class="toolbar">
+    <div class="toolbar-left"><div class="search-box"><span style="color:#94A3B8">🔍</span><input type="text" placeholder="Buscar..." oninput="filterTable('leishmania',this.value)"></div></div>
+    <div class="toolbar-right"><button class="btn btn-primary" onclick="openModal('leishmania')">＋ Novo Paciente</button></div>
+  </div>
+  <div class="table-wrap"><table class="ptable"><thead><tr>
+    <th>Cliente</th><th>Tel/WhatsApp</th><th>Ficha</th><th>Pet</th><th>Tipo</th><th>Veterinário</th>
+    <th class="center">Situação</th><th class="center">Início</th>
+    <th class="center">D+1</th><th class="center">✓</th>
+    <th class="center">D+2</th><th class="center">✓</th>
+    <th class="center">D+15</th><th class="center">✓</th>
+    <th class="center">D+30</th><th class="center">✓</th>
+    <th class="center">Agendou?</th><th class="center">Pront.</th><th>Obs.</th><th></th>
+  </tr></thead><tbody id="body-leishmania"></tbody></table></div>
+</div>
+
+<div class="page" id="oncologia">
+  <div class="toolbar">
+    <div class="toolbar-left"><div class="search-box"><span style="color:#94A3B8">🔍</span><input type="text" placeholder="Buscar..." oninput="filterTable('oncologia',this.value)"></div></div>
+    <div class="toolbar-right"><button class="btn btn-primary" onclick="openModal('oncologia')">＋ Novo Paciente</button></div>
+  </div>
+  <div class="table-wrap"><table class="ptable"><thead><tr>
+    <th>Cliente</th><th>Tel/WhatsApp</th><th>Ficha</th><th>Pet</th><th>Tipo</th><th>Veterinário</th>
+    <th class="center">Situação</th><th class="center">Início</th>
+    <th class="center">D+1</th><th class="center">✓</th>
+    <th class="center">D+2</th><th class="center">✓</th>
+    <th class="center">D+15</th><th class="center">✓</th>
+    <th class="center">D+30</th><th class="center">✓</th>
+    <th class="center">Agendou?</th><th class="center">Pront.</th><th>Obs.</th><th></th>
+  </tr></thead><tbody id="body-oncologia"></tbody></table></div>
+</div>
+
+<!-- RADAR DE CHURN -->
+<div class="page" id="churn">
+  <div class="hoje-header">
+    <h2>📡 Radar de Churn — Clientes Sumindo</h2>
+  </div>
+  <div class="churn-filters">
+    <button class="churn-filter-btn active" onclick="filterChurn('todos',this)">Todos</button>
+    <button class="churn-filter-btn" onclick="filterChurn('60',this)">⚠️ 60+ dias</button>
+    <button class="churn-filter-btn" onclick="filterChurn('90',this)">🔴 90+ dias</button>
+    <button class="churn-filter-btn" onclick="filterChurn('120',this)">💀 120+ dias</button>
+  </div>
+  <div class="data-table"><table>
+    <thead><tr><th>Pet</th><th>Tutor</th><th>Telefone</th><th>Ficha SimpleVet</th><th>Aba</th><th>Veterinário</th><th>Último Atend.</th><th>Dias sem voltar</th><th>Risco</th><th>Ação</th></tr></thead>
+    <tbody id="tbody-churn"><tr class="empty-row"><td colspan="10">Nenhum cliente em risco de churn 🎉</td></tr></tbody>
+  </table></div>
+</div>
+
+<!-- ANALYTICS -->
+<div class="page" id="analytics">
+  <div class="anl-header">
+    <h2>📈 Análises &amp; Relatórios</h2>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="year-sel">
+        <button class="year-btn" onclick="changeYear(-1)">◀</button>
+        <span class="year-val" id="year-display">2026</span>
+        <button class="year-btn" onclick="changeYear(1)">▶</button>
+      </div>
+      <button class="btn btn-export" onclick="exportarPDF()">📄 Exportar PDF</button>
+    </div>
+  </div>
+  <div class="charts-grid">
+    <div class="chart-card"><h3>Pacientes por Mês</h3><div class="csub">Novos atendimentos + retornos agendados</div><div class="chart-wrap"><canvas id="chart-mensal"></canvas></div></div>
+    <div class="chart-card"><h3>Status do Follow-up</h3><div class="csub">Distribuição atual de todos os pacientes</div><div class="chart-wrap"><canvas id="chart-followup"></canvas></div></div>
+  </div>
+  <div class="anl-grid3">
+    <div class="stat-card"><h3>🔄 Taxa de Retorno por Mês</h3><div id="stat-retorno"></div></div>
+    <div class="stat-card"><h3>🏷️ Tipos de Atendimento</h3><div id="stat-tipos"></div></div>
+    <div class="stat-card"><h3>👨‍⚕️ Retornos por Veterinário</h3><div id="stat-vets"></div></div>
+  </div>
+  <div class="charts-grid">
+    <div class="chart-card"><h3>Pacientes por Aba</h3><div class="csub">Geral vs Leishmania vs Oncologia</div><div class="chart-wrap"><canvas id="chart-abas"></canvas></div></div>
+    <div class="chart-card"><h3>Internações por Mês</h3><div class="csub">Total de animais internados no ano</div><div class="chart-wrap"><canvas id="chart-internacoes"></canvas></div></div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<!-- MODAL NOVO PACIENTE -->
+<div class="modal-overlay" id="modal"><div class="modal modal-lg">
+  <h2>➕ Novo Paciente</h2>
+  <div class="form-grid">
+    <div class="form-group form-full"><label>Cliente / Tutor *</label><input type="text" id="f-cliente" placeholder="Nome completo do tutor"></div>
+    <div class="form-group"><label>Telefone / WhatsApp *</label><input type="text" id="f-tel" placeholder="(31) 99999-9999"></div>
+    <div class="form-group"><label>Ficha SimpleVet</label><input type="text" id="f-ficha" placeholder="Ex: 9122"></div>
+    <div class="form-group"><label>Nome do Pet *</label><input type="text" id="f-pet" placeholder="Ex: Nina"></div>
+    <div class="form-group"><label>Tipo de Atendimento *</label>
+      <select id="f-tipo" onchange="updateEsteira()">
+        <option value="">Selecione...</option>
+        <option value="Consulta">Consulta</option>
+        <option value="Retorno">Retorno</option>
+        <option value="Cirurgia">Cirurgia</option>
+        <option value="Exame">Exame</option>
+        <option value="Internação">Internação</option>
+        <option value="Emergência">Emergência</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Data do Atendimento *</label><input type="date" id="f-data"></div>
+    <div class="form-group"><label>Veterinário</label><input type="text" id="f-vet" placeholder="Nome do veterinário"></div>
+    <div class="form-group"><label>Primeiro atendimento?</label>
+      <select id="f-novo"><option value="nao">Não — cliente já conhecido</option><option value="sim">Sim — primeiro atendimento</option></select>
+    </div>
+    <div class="form-group form-full" id="esteira-info" style="background:var(--brand-light);border-radius:8px;padding:10px 13px;font-size:12px;color:var(--brand-dark);display:none">
+      <strong>Esteira automática:</strong> <span id="esteira-desc">—</span>
+    </div>
+    <div class="form-group form-full"><label>Animal está internado agora?</label>
+      <select id="f-internado"><option value="nao">Não — vai para casa</option><option value="sim">Sim — ficará internado</option></select>
+    </div>
+    <div class="form-group form-full"><label>Observações</label><input type="text" id="f-obs" placeholder="Observações iniciais"></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-primary" onclick="addPaciente()">💾 Salvar Paciente</button>
+  </div>
+</div></div>
+
+<!-- MODAL EDITAR -->
+<div class="modal-overlay" id="modal-edit"><div class="modal modal-lg">
+  <h2>✏️ Editar Paciente</h2>
+  <div class="form-grid">
+    <div class="form-group form-full"><label>Cliente / Tutor *</label><input type="text" id="e-cliente"></div>
+    <div class="form-group"><label>Telefone / WhatsApp</label><input type="text" id="e-tel"></div>
+    <div class="form-group"><label>Ficha SimpleVet</label><input type="text" id="e-ficha"></div>
+    <div class="form-group"><label>Nome do Pet *</label><input type="text" id="e-pet"></div>
+    <div class="form-group"><label>Tipo de Atendimento</label>
+      <select id="e-tipo">
+        <option value="Consulta">Consulta</option><option value="Retorno">Retorno</option>
+        <option value="Cirurgia">Cirurgia</option><option value="Exame">Exame</option>
+        <option value="Internação">Internação</option><option value="Emergência">Emergência</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Data do Atendimento</label><input type="date" id="e-data"></div>
+    <div class="form-group"><label>Veterinário</label><input type="text" id="e-vet"></div>
+    <div class="form-group"><label>Observações</label><input type="text" id="e-obs"></div>
+    <div class="form-group"><label>Agendou Retorno?</label>
+      <select id="e-agendou"><option value="">—</option><option value="Sim">Sim</option><option value="Não">Não</option><option value="Pendente">Pendente</option></select>
+    </div>
+    <div class="form-group"><label>Prontuário OK?</label>
+      <select id="e-prontuario"><option value="">—</option><option value="Sim">OK ✓</option><option value="Não">Não ✗</option><option value="Pendente">Pendente</option></select>
+    </div>
+    <div class="form-group form-full" style="display:flex;align-items:center;gap:16px;padding-top:12px;">
+      <label style="margin:0;text-transform:none;font-size:13px;font-weight:500;color:var(--gray-600);display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="e-c1"> D+1 feito</label>
+      <label style="margin:0;text-transform:none;font-size:13px;font-weight:500;color:var(--gray-600);display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="e-c2"> D+2 feito</label>
+      <label style="margin:0;text-transform:none;font-size:13px;font-weight:500;color:var(--gray-600);display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="e-c15"> D+15 feito</label>
+      <label style="margin:0;text-transform:none;font-size:13px;font-weight:500;color:var(--gray-600);display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="e-c30"> D+30 feito</label>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeEditModal()">Cancelar</button>
+    <button class="btn btn-primary" onclick="saveEdit()">💾 Salvar</button>
+  </div>
+</div></div>
+
+<!-- MODAL INTERNAR -->
+<div class="modal-overlay" id="modal-internar"><div class="modal">
+  <h2>🏥 Internar Paciente</h2>
+  <div class="info-box orange"><h4>⚠️ Esteira pausada durante internação</h4>Os contatos D+1, D+2, D+15 e D+30 iniciarão automaticamente a partir da <strong>data da alta</strong>.</div>
+  <div class="form-grid">
+    <div class="form-group form-full"><label>Data de Internação *</label><input type="date" id="i-data"></div>
+    <div class="form-group form-full"><label>Observações</label><input type="text" id="i-obs" placeholder="Ex: Cirurgia de urgência, monitoramento..."></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeInternarModal()">Cancelar</button>
+    <button class="btn btn-primary" style="background:var(--orange)" onclick="confirmarInternar()">🏥 Confirmar Internação</button>
+  </div>
+</div></div>
+
+<!-- MODAL ALTA -->
+<div class="modal-overlay" id="modal-alta"><div class="modal">
+  <h2>🏠 Dar Alta</h2>
+  <div class="info-box green">✅ A esteira D+1, D+2, D+15 e D+30 será iniciada automaticamente a partir da data de alta.</div>
+  <div class="form-grid">
+    <div class="form-group form-full"><label>Data da Alta *</label><input type="date" id="a-data"></div>
+    <div class="form-group form-full"><label>Observações</label><input type="text" id="a-obs" placeholder="Ex: Recuperação ótima, retorno em 15 dias..."></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeAltaModal()">Cancelar</button>
+    <button class="btn btn-primary" style="background:var(--green-txt)" onclick="confirmarAlta()">🏠 Confirmar Alta</button>
+  </div>
+</div></div>
+
+<!-- MODAL HISTÓRICO -->
+<div class="modal-overlay" id="modal-hist"><div class="modal modal-lg">
+  <h2>🐾 Histórico do Paciente</h2>
+  <div class="hist-hdr">
+    <div class="hist-avatar" id="hist-avatar">🐾</div>
+    <div class="hist-info"><h3 id="hist-nome">—</h3><p id="hist-info-sub">—</p></div>
+    <div style="margin-left:auto"><span id="hist-ficha-badge"></span></div>
+  </div>
+  <div id="hist-timeline"></div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="closeHistModal()">Fechar</button>
+  </div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var SHEETS=['geral','leishmania','oncologia'];
+var data={geral:{},leishmania:{},oncologia:{}};
+var FB_URL='';
+var currentModal='',editSheet='',editIdx='',internSheet='',internIdx='';
+var analyticsYear=new Date().getFullYear();
+var charts={};
+var churnFilter='todos';
+var MESES=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+var LOGO='https://static.wixstatic.com/media/a043c5_73fcea3703b44a76bbd343963bb59c2e~mv2.png/v1/crop/x_51,y_81,w_467,h_359/fill/w_518,h_398,al_c,lg_1,q_85,enc_avif,quality_auto/Logo%20Intervet%20PNG.png';
+
+// Esteiras por tipo
+var ESTEIRAS={
+  'Consulta':  {d1:1,d2:null,d15:15,d30:30, desc:'D+1, D+15, D+30'},
+  'Retorno':   {d1:1,d2:null,d15:15,d30:30, desc:'D+1, D+15, D+30'},
+  'Exame':     {d1:1,d2:null,d15:15,d30:30, desc:'D+1, D+15, D+30'},
+  'Cirurgia':  {d1:1,d2:3,   d15:7, d30:30, desc:'D+1, D+3, D+7, D+30 (acompanhamento pós-cirúrgico)'},
+  'Internação':{d1:1,d2:3,   d15:7, d30:30, desc:'D+1, D+3, D+7, D+30 (a partir da alta)'},
+  'Emergência':{d1:1,d2:3,   d15:7, d30:30, desc:'D+1, D+3, D+7, D+30'},
+};
+
+// ── FIREBASE ──────────────────────────────────────────────────────────────
+function fbUrl(p){return FB_URL.replace(/\/$/,'')+'/'+p+'.json';}
+function fbGet(p,cb){fetch(fbUrl(p)).then(function(r){return r.json();}).then(function(d){cb(null,d);}).catch(function(e){cb(e,null);});}
+function fbSet(p,v,cb){setSyncStatus('syncing');fetch(fbUrl(p),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(v)}).then(function(){setSyncStatus('online');if(cb)cb();}).catch(function(e){setSyncStatus('offline');if(cb)cb(e);});}
+function fbPush(p,v,cb){setSyncStatus('syncing');fetch(fbUrl(p),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(v)}).then(function(r){return r.json();}).then(function(d){setSyncStatus('online');if(cb)cb(null,d.name);}).catch(function(e){setSyncStatus('offline');if(cb)cb(e);});}
+function fbDelete(p,cb){setSyncStatus('syncing');fetch(fbUrl(p),{method:'DELETE'}).then(function(){setSyncStatus('online');if(cb)cb();}).catch(function(e){setSyncStatus('offline');if(cb)cb(e);});}
+function setSyncStatus(s){document.getElementById('sync-dot').className='sync-dot '+s;document.getElementById('sync-text').textContent=s==='online'?'Sincronizado':s==='syncing'?'Salvando...':'Sem conexão';}
+function startPolling(){setInterval(function(){SHEETS.forEach(function(s){fbGet(s,function(err,d){if(err){setSyncStatus('offline');return;}setSyncStatus('online');var n=d||{};if(JSON.stringify(n)!==JSON.stringify(data[s])){data[s]=n;renderAll();}});});},3000);}
+
+// ── SETUP ─────────────────────────────────────────────────────────────────
+function conectarFirebase(){var u=document.getElementById('setup-url').value.trim();if(!u||!u.includes('firebaseio.com')){alert('URL inválida. Verifique e tente novamente.');return;}localStorage.setItem('intervet_fb_url',u);FB_URL=u;document.getElementById('setup-screen').classList.add('hidden');iniciarApp();}
+function reconfigurar(){if(confirm('Alterar URL do Firebase?')){document.getElementById('setup-url').value=FB_URL;document.getElementById('setup-screen').classList.remove('hidden');}}
+
+// ── DATE HELPERS ──────────────────────────────────────────────────────────
+function today(){var d=new Date();d.setHours(0,0,0,0);return d;}
+function parseDate(s){if(!s)return null;var d=new Date(s+'T00:00:00');return isNaN(d)?null:d;}
+function addDays(s,n){if(!s||n===null)return null;var d=parseDate(s);if(!d)return null;d.setDate(d.getDate()+n);return d.toISOString().split('T')[0];}
+function fmtDate(s){if(!s)return'—';var p=s.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
+function diffDays(s){var d=parseDate(s);if(!d)return null;return Math.floor((d-today())/86400000);}
+function daysSince(s){var d=parseDate(s);if(!d)return null;return Math.floor((today()-d)/86400000);}
+
+// ── ESTEIRA ───────────────────────────────────────────────────────────────
+function getEsteira(tipo){return ESTEIRAS[tipo]||ESTEIRAS['Consulta'];}
+function getDataInicio(p){return(p.internado==='sim')?p.dataAlta||null:p.dataAtend||null;}
+function getDates(p){var i=getDataInicio(p);if(!i)return{d1:null,d2:null,d15:null,d30:null};var e=getEsteira(p.tipo);return{d1:addDays(i,e.d1),d2:e.d2?addDays(i,e.d2):null,d15:addDays(i,e.d15),d30:addDays(i,e.d30)};}
+
+function getRowStatus(p){
+  if(p.internado==='sim'&&!p.dataAlta)return'internado';
+  var i=getDataInicio(p);if(!i)return'neutro';
+  var dates=getDates(p);
+  var allDone=p.c1&&(!dates.d2||p.c2)&&p.c15&&p.c30;
+  if(allDone)return'verde';
+  var nextDate=!p.c1?dates.d1:dates.d2&&!p.c2?dates.d2:!p.c15?dates.d15:!p.c30?dates.d30:null;
+  if(!nextDate)return'verde';
+  var df=diffDays(nextDate);
+  if(df<0)return'vermelho';
+  if(df<=2)return'amarelo';
+  return'azul';
+}
+
+function getChurnDays(p){
+  var ref=p.dataAlta||p.dataAtend;
+  if(!ref)return null;
+  var ds=daysSince(ref);
+  if(ds===null)return null;
+  if(p.agendou==='Sim')return null; // Tem retorno agendado, nao conta churn
+  var st=getRowStatus(p);
+  if(st==='verde'&&ds>=60)return ds;
+  return null;
+}
+
+function getDcClass(dateStr,done,bloq){
+  if(bloq)return'dc-bloq';
+  if(!dateStr)return'dc-na';
+  if(done)return'dc-ok';
+  var df=diffDays(dateStr);
+  if(df===null)return'dc-na';
+  if(df<0)return'dc-vencido';
+  if(df<=2)return'dc-urgente';
+  return'dc-futuro';
+}
+
+// ── RENDER ALL ────────────────────────────────────────────────────────────
+function renderAll(){SHEETS.forEach(renderSheet);renderHoje();renderChurn();updateCounts();}
+
+function renderSheet(sheet){
+  var tbody=document.getElementById('body-'+sheet);
+  var rows=Object.entries(data[sheet]||{});
+  if(!rows.length){tbody.innerHTML='<tr class="empty-row"><td colspan="20">Nenhum paciente cadastrado.</td></tr>';return;}
+  tbody.innerHTML=rows.map(function(e){
+    var key=e[0],p=e[1];
+    var bloq=(p.internado==='sim'&&!p.dataAlta);
+    var inicio=getDataInicio(p);
+    var dates=getDates(p);
+    var st=getRowStatus(p);
+    var e2=getEsteira(p.tipo||'Consulta');
+
+    var sit=bloq
+      ?'<span class="badge-intern">🏥 Internado</span><br><small style="color:#C2410C;font-size:10px">'+fmtDate(p.dataInternacao)+'</small>'
+      :p.internado==='sim'&&p.dataAlta
+        ?'<span class="badge-alta">🏠 Alta</span><br><small style="color:#065F46;font-size:10px">'+fmtDate(p.dataAlta)+'</small>'
+        :'<span style="color:var(--gray-400);font-size:11px">Em casa</span>';
+
+    var btnI=bloq
+      ?'<button class="btn-alta" onclick="openAltaModal(\''+sheet+'\',\''+key+'\')">🏠 Alta</button>'
+      :'<button class="btn-internar" onclick="openInternarModal(\''+sheet+'\',\''+key+'\')">🏥 Internar</button>';
+
+    var iCell=bloq?'<span class="date-chip dc-bloq">⏸</span>':inicio?'<span class="date-chip dc-ok">'+fmtDate(inicio)+'</span>':'<span class="date-chip dc-na">—</span>';
+
+    var d2label=e2.d2?'D+'+e2.d2:'—';
+    var d15label='D+'+e2.d15;
+
+    var ag=p.agendou==='Sim'?'<span class="status-pill pill-sim">Sim</span>':p.agendou==='Não'?'<span class="status-pill pill-nao">Não</span>':p.agendou==='Pendente'?'<span class="status-pill pill-pend">Pend.</span>':'<span style="color:var(--gray-400)">—</span>';
+    var pr=p.prontuario==='Sim'?'<span class="status-pill pill-sim">OK</span>':p.prontuario==='Não'?'<span class="status-pill pill-nao">Não</span>':p.prontuario==='Pendente'?'<span class="status-pill pill-pend">Pend.</span>':'<span style="color:var(--gray-400)">—</span>';
+
+    var tipoClass='tc-'+(p.tipo||'consulta').toLowerCase().replace('ê','e').replace('ã','a');
+    var tipoChip='<span class="tipo-chip '+tipoClass+'">'+esc(p.tipo||'—')+'</span>';
+    var novoChip=p.novoCliente==='sim'?'<span class="novo-chip">🌟 Novo</span> ':'';
+
+    var telLink=p.tel?'<a href="https://wa.me/55'+p.tel.replace(/\D/g,'')+'" target="_blank" style="color:var(--brand);font-size:12px;text-decoration:none">📱 '+esc(p.tel)+'</a>':'<span style="color:var(--gray-400)">—</span>';
+
+    return'<tr class="s-'+st+'">'
+      +'<td>'+novoChip+'<strong style="font-size:12px">'+esc(p.cliente)+'</strong></td>'
+      +'<td>'+telLink+'</td>'
+      +'<td class="center"><span class="ficha-chip">'+esc(p.ficha||'—')+'</span></td>'
+      +'<td><strong>'+esc(p.pet)+'</strong></td>'
+      +'<td>'+tipoChip+'</td>'
+      +'<td style="font-size:12px">'+esc(p.vet||'')+'</td>'
+      +'<td class="center">'+sit+'</td>'
+      +'<td class="center">'+iCell+'</td>'
+      +'<td class="center"><span class="date-chip '+getDcClass(dates.d1,p.c1,bloq)+'">'+(bloq||!dates.d1?'—':fmtDate(dates.d1))+'</span></td>'
+      +'<td class="center"><input type="checkbox"'+(p.c1?' checked':'')+(bloq?' disabled':'')+' onchange="toggle(\''+sheet+'\',\''+key+'\',\'c1\',this.checked)"></td>'
+      +'<td class="center"><span class="date-chip '+getDcClass(dates.d2,p.c2,bloq)+'">'+(bloq||!dates.d2?'—':fmtDate(dates.d2))+'</span></td>'
+      +'<td class="center">'+(dates.d2?'<input type="checkbox"'+(p.c2?' checked':'')+(bloq?' disabled':'')+' onchange="toggle(\''+sheet+'\',\''+key+'\',\'c2\',this.checked)">':'<span style="color:var(--gray-200)">—</span>')+'</td>'
+      +'<td class="center"><span class="date-chip '+getDcClass(dates.d15,p.c15,bloq)+'">'+(bloq||!dates.d15?'—':fmtDate(dates.d15))+'</span></td>'
+      +'<td class="center"><input type="checkbox"'+(p.c15?' checked':'')+(bloq?' disabled':'')+' onchange="toggle(\''+sheet+'\',\''+key+'\',\'c15\',this.checked)"></td>'
+      +'<td class="center"><span class="date-chip '+getDcClass(dates.d30,p.c30,bloq)+'">'+(bloq||!dates.d30?'—':fmtDate(dates.d30))+'</span></td>'
+      +'<td class="center"><input type="checkbox"'+(p.c30?' checked':'')+(bloq?' disabled':'')+' onchange="toggle(\''+sheet+'\',\''+key+'\',\'c30\',this.checked)"></td>'
+      +'<td class="center">'+ag+'</td>'
+      +'<td class="center">'+pr+'</td>'
+      +'<td style="font-size:11px;color:var(--gray-600);max-width:120px">'+esc(p.obs||'')+'</td>'
+      +'<td class="center"><div class="action-btns">'+btnI
+      +whatsBtn(p,'small')
+      +'<button class="icon-btn" onclick="openHistModal(\''+sheet+'\',\''+key+'\')" title="Histórico">📋</button>'
+      +'<button class="icon-btn" onclick="openEditModal(\''+sheet+'\',\''+key+'\')" title="Editar">✏️</button>'
+      +'<button class="icon-btn" onclick="deletePaciente(\''+sheet+'\',\''+key+'\')" title="Remover">🗑️</button>'
+      +'</div></td></tr>';
+  }).join('');
+}
+
+function whatsBtn(p,size){
+  if(!p.tel)return'';
+  var num='55'+p.tel.replace(/\D/g,'');
+  var msg=encodeURIComponent('Olá '+p.cliente.split(' ')[0]+'! Aqui é a Intervet Centro Veterinário. Estamos entrando em contato sobre o '+p.pet+'. Tudo bem com ele? 🐾');
+  return'<a href="https://wa.me/'+num+'?text='+msg+'" target="_blank"><button class="btn-whats">💬 WhatsApp</button></a>';
+}
+
+// ── DASHBOARD ────────────────────────────────────────────────────
+function renderDashboard(){
+  var atr=0,urg=0,intN=0,conc=0,tot=0;
+  var internRows=[],atrRows=[],prontRows=[];
+  SHEETS.forEach(function(s){
+    var label=s==='geral'?'🐾 Geral':s==='leishmania'?'🦟 Leishmania':'🔬 Oncologia';
+    Object.entries(data[s]||{}).forEach(function(e){
+      var key=e[0],p=e[1];if(!p.cliente)return;tot++;
+      var st=getStatus(p),bloq=(p.internado==='sim'&&!p.dataAlta);
+      var inicio=getInicio(p),tipo=p.tipo||'Consulta',steps=getEsteira(tipo);
+      if(bloq)intN++;if(st==='vermelho')atr++;if(st==='amarelo')urg++;if(st==='verde')conc++;
+      var wppBtn='<span style="color:var(--gray-400);font-size:11px">'+esc(p.tel||'—')+'</span>';
+      if(p.tel){var num=p.tel.replace(/\D/g,'');wppBtn='<a class="btn-wpp" href="https://wa.me/55'+num+'?text=Ol%C3%A1!%20Aqui%20%C3%A9%20a%20Intervet." target="_blank">🟢 WhatsApp</a>';}
+      if(bloq){
+        var altaBtn='<button class="btn-alta" onclick="switchTab(\''+s+'\');setTimeout(function(){openInternarModal(\''+s+'\',\''+key+'\',true)},200)">🏠 Alta</button>';
+        internRows.push('<tr><td><strong>'+esc(p.pet)+'</strong></td><td>'+esc(p.cliente)+'</td><td>'+wppBtn+'</td><td>'+label+'</td><td>'+esc(p.vet||'—')+'</td><td style="font-size:11px;color:var(--orange-txt)">'+fmt(p.dataInternacao)+'</td><td style="font-size:11px">'+esc(p.obsInternacao||'—')+'</td><td>'+altaBtn+'</td></tr>');
+      }
+      if(!bloq&&inicio){
+        steps.forEach(function(step,x){
+          var fld=getField(x);
+          if(!p[fld]){var dt=addD(inicio,step.d),df=diff(dt);
+            if(df!==null&&df<0)atrRows.push('<tr><td><strong>'+esc(p.pet)+'</strong></td><td>'+esc(p.cliente)+'</td><td>'+label+'</td><td>'+step.l+'</td><td style="color:#DC2626;font-size:11px">'+fmt(dt)+'</td><td>'+esc(p.vet||'—')+'</td></tr>');
+          }
+        });
+      }
+      if(p.prontuario==='Nao'||p.prontuario==='Não')prontRows.push('<tr><td><strong>'+esc(p.pet)+'</strong></td><td>'+esc(p.cliente)+'</td><td>'+label+'</td><td>'+esc(p.vet||'—')+'</td><td style="font-size:11px">'+fmt(p.dataAtend)+'</td></tr>');
+    });
+  });
+  document.getElementById('dk-int').textContent=intN;
+  document.getElementById('dk-atr').textContent=atr;
+  document.getElementById('dk-urg').textContent=urg;
+  document.getElementById('dk-conc').textContent=conc;
+  document.getElementById('dk-tot').textContent=tot;
+  var ban=document.getElementById('intern-banner');
+  if(intN>0){ban.classList.remove('hidden');document.getElementById('intern-banner-title').textContent=intN+' animal'+(intN>1?'is internados':' internado');}else ban.classList.add('hidden');
+  document.getElementById('db-intern-n').textContent=intN;
+  document.getElementById('db-atr-n').textContent=atrRows.length;
+  document.getElementById('db-pront-n').textContent=prontRows.length;
+  document.getElementById('db-intern-body').innerHTML=internRows.length?internRows.join(''):'<tr class="task-empty"><td colspan="8">Nenhum animal internado 🎉</td></tr>';
+  document.getElementById('db-atr-body').innerHTML=atrRows.length?atrRows.join(''):'<tr class="task-empty"><td colspan="6">Nenhum contato atrasado 🎉</td></tr>';
+  document.getElementById('db-pront-body').innerHTML=prontRows.length?prontRows.join(''):'<tr class="task-empty"><td colspan="5">Todos prontuários OK 🎉</td></tr>';
+  var el=document.getElementById('cnt-dashboard');
+  var n=atr+urg;el.textContent=n>0?n+' ⚠️':intN>0?intN+' 🏥':'✓';
+  if(n>0)el.classList.add('alert');else el.classList.remove('alert');
+}
+
+// ── HOJE ──────────────────────────────────────────────────────────────────
+function renderHoje(){
+  var atrasados=[],urgentes=[],internados=[],prontuarios=[];
+  SHEETS.forEach(function(s){
+    var label=s==='geral'?'🐾 Geral':s==='leishmania'?'🦟 Leishmania':'🔬 Oncologia';
+    Object.entries(data[s]||{}).forEach(function(e){
+      var key=e[0],p=e[1];if(!p.cliente)return;
+      var st=getRowStatus(p);
+      var bloq=(p.internado==='sim'&&!p.dataAlta);
+      var dates=getDates(p);
+      var telLink=p.tel?'<a href="https://wa.me/55'+p.tel.replace(/\D/g,'')+'" target="_blank" style="color:var(--brand)">'+esc(p.tel)+'</a>':'—';
+
+      if(bloq){internados.push('<tr><td><strong>'+esc(p.pet)+'</strong></td><td>'+esc(p.cliente)+'</td><td>'+telLink+'</td><td>'+label+'</td><td>'+esc(p.vet||'—')+'</td><td style="font-size:11px;color:var(--orange-txt);font-family:\'DM Mono\',monospace">'+fmtDate(p.dataInternacao)+'</td><td style="font-size:12px">'+esc(p.obsInternacao||'—')+'</td><td><button class="btn-alta" onclick="switchTab(\''+s+'\');setTimeout(function(){openAltaModal(\''+s+'\',\''+key+'\')},200)">🏠 Alta</button></td></tr>');}
+
+      if(!bloq){
+        var checkNext=function(dateStr,field,label2){
+          if(!dateStr||p[field])return;
+          var df=diffDays(dateStr);
+          var row='<tr><td><strong>'+esc(p.pet)+'</strong></td><td>'+esc(p.cliente)+'</td><td>'+telLink+'</td><td>'+label+'</td><td>'+label2+'</td><td style="font-family:\'DM Mono\',monospace;font-size:11px;'+(df<0?'color:#DC2626':df<=2?'color:#D97706':'')+'">'+(df<0?'Venceu em ':df===0?'Hoje!':df===1?'Amanhã':'Em '+df+' dias')+' ('+fmtDate(dateStr)+')</td><td>'+esc(p.vet||'—')+'</td><td>'+whatsBtn(p,'small')+'</td></tr>';
+          if(df<0)atrasados.push(row);
+          else if(df<=2)urgentes.push(row);
+        };
+        checkNext(dates.d1,'c1','1º Contato (D+1)');
+        if(dates.d2)checkNext(dates.d2,'c2','2º Contato (D+'+getEsteira(p.tipo).d2+')');
+        if(p.c1&&(!dates.d2||p.c2))checkNext(dates.d15,'c15','Contato D+'+getEsteira(p.tipo).d15);
+        if(p.c15)checkNext(dates.d30,'c30','Contato D+30');
+      }
+
+      if(p.prontuario==='Não')prontuarios.push('<tr><td><strong>'+esc(p.pet)+'</strong></td><td>'+esc(p.cliente)+'</td><td>'+label+'</td><td>'+esc(p.vet||'—')+'</td><td style="font-size:11px;font-family:\'DM Mono\',monospace">'+fmtDate(p.dataAtend)+'</td></tr>');
+    });
+  });
+
+  document.getElementById('h-atrasados').textContent=atrasados.length;
+  document.getElementById('h-urgentes').textContent=urgentes.length;
+  document.getElementById('h-internados').textContent=internados.length;
+  document.getElementById('cnt-atraso-hoje').textContent=atrasados.length;
+  document.getElementById('cnt-urgente-hoje').textContent=urgentes.length;
+  document.getElementById('cnt-intern-hoje').textContent=internados.length;
+  document.getElementById('cnt-pront-hoje').textContent=prontuarios.length;
+
+  document.getElementById('tbody-atrasados').innerHTML=atrasados.length?atrasados.join(''):'<tr class="empty-row"><td colspan="8">Nenhum contato atrasado 🎉</td></tr>';
+  document.getElementById('tbody-urgentes').innerHTML=urgentes.length?urgentes.join(''):'<tr class="empty-row"><td colspan="8">Nenhum contato urgente no momento 👍</td></tr>';
+  document.getElementById('tbody-internados').innerHTML=internados.length?internados.join(''):'<tr class="empty-row"><td colspan="8">Nenhum animal internado 🎉</td></tr>';
+  document.getElementById('tbody-prontuarios').innerHTML=prontuarios.length?prontuarios.join(''):'<tr class="empty-row"><td colspan="5">Todos prontuários OK 🎉</td></tr>';
+
+  var ib=document.getElementById('intern-banner');
+  if(internados.length>0){ib.classList.remove('hidden');document.getElementById('intern-banner-title').textContent=internados.length+' animal'+(internados.length>1?'is internados':' internado');}
+  else ib.classList.add('hidden');
+}
+
+// ── CHURN ─────────────────────────────────────────────────────────────────
+function renderChurn(){
+  var rows=[];
+  SHEETS.forEach(function(s){
+    var label=s==='geral'?'🐾 Geral':s==='leishmania'?'🦟 Leishmania':'🔬 Oncologia';
+    Object.entries(data[s]||{}).forEach(function(e){
+      var p=e[1];if(!p.cliente)return;
+      var ds=getChurnDays(p);
+      if(!ds)return;
+      var risk=ds>=120?'<span class="churn-chip churn120">💀 120+ dias</span>':ds>=90?'<span class="churn-chip churn90">🔴 90+ dias</span>':'<span class="churn-chip churn60">⚠️ 60+ dias</span>';
+      var bucket=ds>=120?'120':ds>=90?'90':'60';
+      var telLink=p.tel?'<a href="https://wa.me/55'+p.tel.replace(/\D/g,'')+'" target="_blank" style="color:var(--brand)">'+esc(p.tel)+'</a>':'—';
+      rows.push({ds:ds,bucket:bucket,html:'<tr><td><strong>'+esc(p.pet)+'</strong></td><td>'+esc(p.cliente)+'</td><td>'+telLink+'</td><td><span class="ficha-chip">'+esc(p.ficha||'—')+'</span></td><td>'+label+'</td><td>'+esc(p.vet||'—')+'</td><td style="font-family:\'DM Mono\',monospace;font-size:11px">'+fmtDate(p.dataAtend)+'</td><td style="font-weight:700;color:'+(ds>=90?'#DC2626':'#D97706')+'">'+ds+' dias</td><td>'+risk+'</td><td>'+whatsBtn(p,'small')+'</td></tr>'});
+    });
+  });
+
+  rows.sort(function(a,b){return b.ds-a.ds;});
+  var filtered=churnFilter==='todos'?rows:rows.filter(function(r){return parseInt(r.bucket)>=parseInt(churnFilter);});
+
+  document.getElementById('tbody-churn').innerHTML=filtered.length?filtered.map(function(r){return r.html;}).join(''):'<tr class="empty-row"><td colspan="10">Nenhum cliente em risco neste filtro 🎉</td></tr>';
+
+  // Churn banner no Hoje
+  var total60=rows.length;
+  document.getElementById('h-churn').textContent=total60;
+  var cb=document.getElementById('churn-banner');
+  if(total60>0){cb.classList.remove('hidden');document.getElementById('churn-banner-count').textContent=total60;}
+  else cb.classList.add('hidden');
+}
+
+function filterChurn(val,btn){
+  churnFilter=val;
+  document.querySelectorAll('.churn-filter-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  renderChurn();
+}
+
+// ── COUNTS ────────────────────────────────────────────────────────────────
+function updateCounts(){
+  SHEETS.forEach(function(s){document.getElementById('cnt-'+s).textContent=Object.keys(data[s]||{}).length;});
+  var atr=0,urg=0,intern=0;
+  SHEETS.forEach(function(s){Object.values(data[s]||{}).forEach(function(p){
+    var st=getRowStatus(p);
+    if(st==='vermelho')atr++;if(st==='amarelo')urg++;
+    if(p.internado==='sim'&&!p.dataAlta)intern++;
+  });});
+  var n=atr+urg;
+  var el=document.getElementById('cnt-hoje');
+  el.textContent=atr>0?atr+' 🔴':urg>0?urg+' 🟡':intern>0?intern+' 🏥':'✓';
+  if(atr>0)el.classList.add('alert');else{el.classList.remove('alert');if(urg>0)el.classList.add('warn');else el.classList.remove('warn');}
+}
+
+// ── ANALYTICS ─────────────────────────────────────────────────────────────
+function changeYear(d){analyticsYear+=d;document.getElementById('year-display').textContent=analyticsYear;renderAnalytics();}
+function getAllPacientes(){var a=[];SHEETS.forEach(function(s){Object.entries(data[s]||{}).forEach(function(e){a.push(Object.assign({},e[1],{_sheet:s,_key:e[0]}));});});return a;}
+function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+
+function renderAnalytics(){
+  var yr=analyticsYear,all=getAllPacientes();
+  var porMes=new Array(12).fill(0),internMes=new Array(12).fill(0),retMes=new Array(12).fill(0);
+  all.forEach(function(p){
+    if(p.dataAtend){var d=parseDate(p.dataAtend);if(d&&d.getFullYear()===yr)porMes[d.getMonth()]++;}
+    if(p.dataInternacao){var d=parseDate(p.dataInternacao);if(d&&d.getFullYear()===yr)internMes[d.getMonth()]++;}
+    if(p.agendou==='Sim'&&p.dataAtend){var d=parseDate(p.dataAtend);if(d&&d.getFullYear()===yr)retMes[d.getMonth()]++;}
+  });
+  var concl=0,pend=0,atr=0,intern=0;
+  all.forEach(function(p){var st=getRowStatus(p);if(getRowStatus(p)==='verde')concl++;else if(st==='vermelho')atr++;else if(st==='internado')intern++;else pend++;});
+  var tipos={};all.forEach(function(p){if(p.tipo){tipos[p.tipo]=(tipos[p.tipo]||0)+1;}});
+  var tiposSorted=Object.entries(tipos).sort(function(a,b){return b[1]-a[1];});
+  var maxTipo=tiposSorted.length?tiposSorted[0][1]:1;
+  var vets={};all.forEach(function(p){if(p.vet&&p.agendou==='Sim'){var v=p.vet.trim();vets[v]=(vets[v]||0)+1;}});
+  var vetsSorted=Object.entries(vets).sort(function(a,b){return b[1]-a[1];}).slice(0,7);
+  var maxVet=vetsSorted.length?vetsSorted[0][1]:1;
+  var porAba=[Object.keys(data.geral||{}).length,Object.keys(data.leishmania||{}).length,Object.keys(data.oncologia||{}).length];
+
+  destroyChart('chart-mensal');
+  charts['chart-mensal']=new Chart(document.getElementById('chart-mensal'),{type:'bar',data:{labels:MESES,datasets:[{label:'Atendimentos',data:porMes,backgroundColor:'rgba(45,95,63,.75)',borderColor:'#2D5F3F',borderWidth:1.5,borderRadius:5},{label:'Retornos',data:retMes,backgroundColor:'rgba(141,198,63,.6)',borderColor:'#8DC63F',borderWidth:1.5,borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:11}}}},scales:{y:{beginAtZero:true,ticks:{stepSize:1,font:{size:11}},grid:{color:'rgba(0,0,0,.05)'}},x:{ticks:{font:{size:11}},grid:{display:false}}}}});
+
+  destroyChart('chart-followup');
+  charts['chart-followup']=new Chart(document.getElementById('chart-followup'),{type:'doughnut',data:{labels:['Concluído','Pendente','Atrasado','Internado'],datasets:[{data:[concl,pend,atr,intern],backgroundColor:['#8DC63F','#3B82F6','#EF4444','#F7941D'],borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11},padding:10}},tooltip:{callbacks:{label:function(c){var t=c.dataset.data.reduce(function(a,b){return a+b;},0);return c.label+': '+c.parsed+(t?' ('+Math.round(c.parsed/t*100)+'%)':'');}}}}}});
+
+  destroyChart('chart-abas');
+  charts['chart-abas']=new Chart(document.getElementById('chart-abas'),{type:'doughnut',data:{labels:['Geral','Leishmania','Oncologia'],datasets:[{data:porAba,backgroundColor:['#2D5F3F','#7C3AED','#F7941D'],borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11},padding:10}}}}});
+
+  destroyChart('chart-internacoes');
+  charts['chart-internacoes']=new Chart(document.getElementById('chart-internacoes'),{type:'bar',data:{labels:MESES,datasets:[{label:'Internações',data:internMes,backgroundColor:'rgba(247,148,29,.7)',borderColor:'#F7941D',borderWidth:1.5,borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1,font:{size:11}},grid:{color:'rgba(0,0,0,.05)'}},x:{ticks:{font:{size:11}},grid:{display:false}}}}});
+
+  var retHtml='';MESES.forEach(function(m,i){var tot=porMes[i],ret=retMes[i],pct=tot>0?Math.round(ret/tot*100):0;retHtml+='<div class="stat-row"><div class="stat-top"><span class="stat-lbl">'+m+' ('+ret+'/'+tot+')</span><span class="stat-val">'+pct+'%</span></div><div class="stat-bar-bg"><div class="stat-bar lime" style="width:'+pct+'%"></div></div></div>';});
+  document.getElementById('stat-retorno').innerHTML=retHtml||'<div style="color:var(--gray-400);font-size:12px;padding:8px">Sem dados</div>';
+
+  var tiposHtml=tiposSorted.map(function(t){var pct=Math.round(t[1]/maxTipo*100);return'<div class="stat-row"><div class="stat-top"><span class="stat-lbl">'+esc(t[0])+'</span><span class="stat-val">'+t[1]+'</span></div><div class="stat-bar-bg"><div class="stat-bar" style="width:'+pct+'%"></div></div></div>';}).join('');
+  document.getElementById('stat-tipos').innerHTML=tiposHtml||'<div style="color:var(--gray-400);font-size:12px;padding:8px">Sem dados</div>';
+
+  var vetHtml=vetsSorted.map(function(v){var pct=Math.round(v[1]/maxVet*100);return'<div class="stat-row"><div class="stat-top"><span class="stat-lbl">'+esc(v[0])+'</span><span class="stat-val">'+v[1]+'</span></div><div class="stat-bar-bg"><div class="stat-bar orange" style="width:'+pct+'%"></div></div></div>';}).join('');
+  document.getElementById('stat-vets').innerHTML=vetHtml||'<div style="color:var(--gray-400);font-size:12px;padding:8px">Sem dados — preencha o campo Veterinário</div>';
+}
+
+// ── EXPORT PDF ────────────────────────────────────────────────────────────
+function exportarPDF(){
+  var w=window.open('','_blank'),all=getAllPacientes(),yr=analyticsYear;
+  var porMes=new Array(12).fill(0);all.forEach(function(p){if(p.dataAtend){var d=parseDate(p.dataAtend);if(d&&d.getFullYear()===yr)porMes[d.getMonth()]++;}});
+  var concl=0,atr=0;all.forEach(function(p){if(getRowStatus(p)==='verde')concl++;if(getRowStatus(p)==='vermelho')atr++;});
+  var taxa=all.length>0?Math.round(concl/all.length*100):0;
+  var rows=all.map(function(p){var st=getRowStatus(p);var stL=st==='verde'?'✅':st==='vermelho'?'🔴':st==='amarelo'?'🟡':st==='azul'?'🔵':st==='internado'?'🏥':'—';return'<tr><td>'+esc(p.pet)+'</td><td>'+esc(p.cliente)+'</td><td>'+esc(p.tel||'—')+'</td><td>'+esc(p.ficha||'—')+'</td><td>'+esc(p.tipo||'—')+'</td><td>'+esc(p.vet||'—')+'</td><td>'+fmtDate(p.dataAtend)+'</td><td>'+stL+'</td><td>'+(p.agendou||'—')+'</td></tr>';}).join('');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Relatório Intervet '+yr+'</title><style>body{font-family:Arial,sans-serif;padding:32px;color:#1E293B;}h1{color:#2D5F3F;border-bottom:3px solid #8DC63F;padding-bottom:12px;margin-bottom:20px;}h2{color:#1E4229;margin-top:26px;font-size:15px;}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:18px 0;}.kpi{background:#EAF4EE;border-radius:8px;padding:14px;border-left:4px solid #2D5F3F;}.kpi .v{font-size:26px;font-weight:700;color:#2D5F3F;}.kpi .l{font-size:10px;color:#94A3B8;margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px;}.meses{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:12px 0;}.mes{background:#EAF4EE;border-radius:6px;padding:10px;text-align:center;}.mes .mv{font-size:18px;font-weight:700;color:#2D5F3F;}.mes .ml{font-size:10px;color:#64748B;}table{width:100%;border-collapse:collapse;margin-top:10px;}th{background:#2D5F3F;color:#fff;padding:8px 10px;font-size:11px;text-align:left;}td{padding:7px 10px;font-size:12px;border-bottom:1px solid #E2E8F0;}@media print{button{display:none;}}</style></head><body>');
+  w.document.write('<h1>🐾 Intervet — Relatório de Follow-up '+yr+'</h1><p style="color:#64748B;font-size:12px">Gerado em: '+new Date().toLocaleString('pt-BR')+'</p>');
+  w.document.write('<div class="kpis"><div class="kpi"><div class="l">Total Pacientes</div><div class="v">'+all.length+'</div></div><div class="kpi"><div class="l">Follow-up Concluído</div><div class="v">'+concl+'</div></div><div class="kpi"><div class="l">Taxa de Conclusão</div><div class="v">'+taxa+'%</div></div><div class="kpi"><div class="l">Atrasados</div><div class="v" style="color:#DC2626">'+atr+'</div></div></div>');
+  w.document.write('<h2>Atendimentos por Mês</h2><div class="meses">');
+  MESES.forEach(function(m,i){w.document.write('<div class="mes"><div class="mv">'+porMes[i]+'</div><div class="ml">'+m+'</div></div>');});
+  w.document.write('</div><h2>Lista Completa de Pacientes</h2><table><thead><tr><th>Pet</th><th>Tutor</th><th>Telefone</th><th>Ficha</th><th>Tipo</th><th>Veterinário</th><th>Data</th><th>Status</th><th>Agendou?</th></tr></thead><tbody>'+rows+'</tbody></table>');
+  w.document.write('<br><button onclick="window.print()" style="background:#2D5F3F;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:14px;cursor:pointer">🖨️ Imprimir / Salvar PDF</button></body></html>');
+  w.document.close();
+}
+
+// ── HISTÓRICO ─────────────────────────────────────────────────────────────
+function openHistModal(sheet,key){
+  var p=data[sheet][key];
+  document.getElementById('hist-nome').textContent=p.pet+' — '+p.cliente;
+  document.getElementById('hist-info-sub').textContent='Tel: '+(p.tel||'—')+' | Vet: '+(p.vet||'—')+(p.novoCliente==='sim'?' | 🌟 Primeiro atendimento':'');
+  document.getElementById('hist-avatar').textContent=sheet==='leishmania'?'🦟':sheet==='oncologia'?'🔬':'🐾';
+  document.getElementById('hist-ficha-badge').innerHTML=p.ficha?'<span class="ficha-chip">Ficha '+p.ficha+'</span>':'';
+  var events=[];
+  if(p.dataAtend)events.push({date:p.dataAtend,type:'atend',title:(p.novoCliente==='sim'?'🌟 Primeiro atendimento — ':'Atendimento — ')+(p.tipo||'Consulta'),details:'Veterinário: '+(p.vet||'—')+(p.obs?'<br>Obs: '+esc(p.obs):''),dotClass:'hdot'});
+  if(p.dataInternacao)events.push({date:p.dataInternacao,type:'intern',title:'Internação',details:(p.obsInternacao||'Sem observações'),dotClass:'hdot orange'});
+  if(p.dataAlta)events.push({date:p.dataAlta,type:'alta',title:'Alta Hospitalar',details:(p.obsAlta||'Sem observações'),dotClass:'hdot lime'});
+  var inicio=getDataInicio(p),dates=getDates(p);
+  if(inicio&&p.c1)events.push({date:dates.d1,type:'c',title:'1º Contato realizado (D+1)',details:'',dotClass:'hdot lime'});
+  if(inicio&&p.c2&&dates.d2)events.push({date:dates.d2,type:'c',title:'2º Contato realizado (D+'+getEsteira(p.tipo).d2+')',details:'',dotClass:'hdot lime'});
+  if(inicio&&p.c15)events.push({date:dates.d15,type:'c',title:'Contato D+'+getEsteira(p.tipo).d15+' realizado',details:'',dotClass:'hdot lime'});
+  if(inicio&&p.c30)events.push({date:dates.d30,type:'c',title:'Contato D+30 realizado',details:'',dotClass:'hdot lime'});
+  if(p.agendou==='Sim')events.push({date:p.dataAtend,type:'ret',title:'Retorno agendado ✓',details:'',dotClass:'hdot'});
+  events.sort(function(a,b){return(a.date||'')>(b.date||'')?1:-1;});
+  var html='';
+  if(!events.length){html='<div style="text-align:center;color:var(--gray-400);padding:24px;font-style:italic">Nenhum evento registrado ainda.</div>';}
+  else events.forEach(function(ev,i){
+    var badge=ev.type==='atend'?'<span class="hbadge hb-blue">Atendimento</span>':ev.type==='intern'?'<span class="hbadge hb-orange">Internação</span>':ev.type==='alta'?'<span class="hbadge hb-green">Alta</span>':ev.type==='c'?'<span class="hbadge hb-green">Contato ✓</span>':ev.type==='ret'?'<span class="hbadge hb-blue">Retorno</span>':'';
+    html+='<div class="hist-item"><div class="hist-dot-wrap"><div class="'+ev.dotClass+'"></div>'+(i<events.length-1?'<div class="hline"></div>':'')+'</div><div class="hist-content"><div class="hdate">'+fmtDate(ev.date)+'</div><div class="htitle">'+ev.title+'</div>'+(ev.details?'<div class="hdetail">'+ev.details+'</div>':'')+'<div class="hbadges">'+badge+'</div></div></div>';
+  });
+  var st=getRowStatus(p);
+  html+='<div class="hist-status"><span><strong>Status:</strong> '+(st==='verde'?'<span style="color:#059669">✅ Concluído</span>':st==='vermelho'?'<span style="color:#DC2626">🔴 Atrasado</span>':st==='amarelo'?'<span style="color:#D97706">🟡 Urgente</span>':st==='azul'?'<span style="color:#2563EB">🔵 Aguardando</span>':st==='internado'?'<span style="color:var(--orange)">🏥 Internado</span>':'<span style="color:#94A3B8">—</span>')+'</span><span>Agendou retorno: <strong>'+(p.agendou||'—')+'</strong></span></div>';
+  document.getElementById('hist-timeline').innerHTML=html;
+  document.getElementById('modal-hist').classList.add('open');
+}
+function closeHistModal(){document.getElementById('modal-hist').classList.remove('open');}
+
+// ── AÇÕES ─────────────────────────────────────────────────────────────────
+function toggle(sheet,key,field,val){data[sheet][key][field]=val;fbSet(sheet+'/'+key+'/'+field,val);renderAll();showToast(val?'✅ Contato marcado!':'↩️ Desmarcado','green');}
+function deletePaciente(sheet,key){if(!confirm('Remover '+data[sheet][key].cliente+'?'))return;delete data[sheet][key];fbDelete(sheet+'/'+key,function(){showToast('🗑️ Removido');});renderAll();}
+
+function openInternarModal(s,k){internSheet=s;internIdx=k;document.getElementById('i-data').value=new Date().toISOString().split('T')[0];document.getElementById('i-obs').value='';document.getElementById('modal-internar').classList.add('open');}
+function closeInternarModal(){document.getElementById('modal-internar').classList.remove('open');}
+function confirmarInternar(){var dt=document.getElementById('i-data').value;if(!dt){alert('Informe a data.');return;}var p=data[internSheet][internIdx];p.internado='sim';p.dataInternacao=dt;p.obsInternacao=document.getElementById('i-obs').value.trim();p.dataAlta='';p.c1=false;p.c2=false;p.c15=false;p.c30=false;fbSet(internSheet+'/'+internIdx,p,function(){showToast('🏥 '+p.pet+' internado — esteira pausada','orange');});renderAll();closeInternarModal();}
+
+function openAltaModal(s,k){internSheet=s;internIdx=k;document.getElementById('a-data').value=new Date().toISOString().split('T')[0];document.getElementById('a-obs').value='';document.getElementById('modal-alta').classList.add('open');}
+function closeAltaModal(){document.getElementById('modal-alta').classList.remove('open');}
+function confirmarAlta(){var dt=document.getElementById('a-data').value;if(!dt){alert('Informe a data.');return;}var p=data[internSheet][internIdx];p.dataAlta=dt;p.obsAlta=document.getElementById('a-obs').value.trim();p.c1=false;p.c2=false;p.c15=false;p.c30=false;fbSet(internSheet+'/'+internIdx,p,function(){showToast('🏠 Alta confirmada! Esteira iniciada','green');});renderAll();closeAltaModal();}
+
+// ── MODAL NOVO ────────────────────────────────────────────────────────────
+function updateEsteira(){
+  var tipo=document.getElementById('f-tipo').value;
+  var el=document.getElementById('esteira-info');
+  var desc=document.getElementById('esteira-desc');
+  if(tipo&&ESTEIRAS[tipo]){el.style.display='block';desc.textContent=ESTEIRAS[tipo].desc;}
+  else el.style.display='none';
+}
+function openModal(s){
+  currentModal=s;
+  ['cliente','tel','ficha','pet','vet','obs'].forEach(function(f){document.getElementById('f-'+f).value='';});
+  document.getElementById('f-tipo').value='';
+  document.getElementById('f-data').value=new Date().toISOString().split('T')[0];
+  document.getElementById('f-novo').value='nao';
+  document.getElementById('f-internado').value='nao';
+  document.getElementById('esteira-info').style.display='none';
+  document.getElementById('modal').classList.add('open');
+  setTimeout(function(){document.getElementById('f-cliente').focus();},100);
+}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+function addPaciente(){
+  var cliente=document.getElementById('f-cliente').value.trim();
+  var pet=document.getElementById('f-pet').value.trim();
+  var dataAtend=document.getElementById('f-data').value;
+  var tipo=document.getElementById('f-tipo').value;
+  var internado=document.getElementById('f-internado').value;
+  if(!cliente||!pet||!dataAtend||!tipo){alert('Preencha: Cliente, Pet, Tipo de Atendimento e Data.');return;}
+  var p={
+    cliente:cliente.toUpperCase(),tel:document.getElementById('f-tel').value.trim(),
+    ficha:document.getElementById('f-ficha').value.trim(),
+    dataAtend:dataAtend,pet:pet.toUpperCase(),tipo:tipo,
+    vet:document.getElementById('f-vet').value.trim(),
+    obs:document.getElementById('f-obs').value.trim(),
+    novoCliente:document.getElementById('f-novo').value,
+    internado:internado==='sim'?'sim':'nao',
+    dataInternacao:internado==='sim'?dataAtend:'',dataAlta:'',
+    c1:false,c2:false,c15:false,c30:false,agendou:'',prontuario:'',
+    criadoEm:new Date().toISOString()
+  };
+  fbPush(currentModal,p,function(err,key){
+    if(err){alert('Erro ao salvar.');return;}
+    data[currentModal][key]=p;renderAll();closeModal();
+    showToast(internado==='sim'?'✅ Paciente internado — esteira pausada':'✅ Paciente cadastrado! Esteira: '+ESTEIRAS[tipo].desc,internado==='sim'?'orange':'green');
+  });
+}
+
+// ── MODAL EDITAR ──────────────────────────────────────────────────────────
+function openEditModal(s,k){
+  editSheet=s;editIdx=k;var p=data[s][k];
+  ['cliente','tel','ficha','pet','motivo','vet','obs'].forEach(function(f){var el=document.getElementById('e-'+f);if(el)el.value=p[f]||'';});
+  document.getElementById('e-cliente').value=p.cliente||'';
+  document.getElementById('e-tel').value=p.tel||'';
+  document.getElementById('e-ficha').value=p.ficha||'';
+  document.getElementById('e-data').value=p.dataAtend||'';
+  document.getElementById('e-pet').value=p.pet||'';
+  document.getElementById('e-tipo').value=p.tipo||'Consulta';
+  document.getElementById('e-vet').value=p.vet||'';
+  document.getElementById('e-obs').value=p.obs||'';
+  document.getElementById('e-agendou').value=p.agendou||'';
+  document.getElementById('e-prontuario').value=p.prontuario||'';
+  document.getElementById('e-c1').checked=!!p.c1;
+  document.getElementById('e-c2').checked=!!p.c2;
+  document.getElementById('e-c15').checked=!!p.c15;
+  document.getElementById('e-c30').checked=!!p.c30;
+  document.getElementById('modal-edit').classList.add('open');
+  setTimeout(function(){document.getElementById('e-cliente').focus();},100);
+}
+function closeEditModal(){document.getElementById('modal-edit').classList.remove('open');}
+function saveEdit(){
+  var cliente=document.getElementById('e-cliente').value.trim();
+  var pet=document.getElementById('e-pet').value.trim();
+  if(!cliente||!pet){alert('Preencha Cliente e Pet.');return;}
+  var p=data[editSheet][editIdx];
+  p.cliente=cliente.toUpperCase();p.tel=document.getElementById('e-tel').value.trim();
+  p.ficha=document.getElementById('e-ficha').value.trim();
+  p.dataAtend=document.getElementById('e-data').value;
+  p.pet=pet.toUpperCase();p.tipo=document.getElementById('e-tipo').value;
+  p.vet=document.getElementById('e-vet').value.trim();p.obs=document.getElementById('e-obs').value.trim();
+  p.agendou=document.getElementById('e-agendou').value;p.prontuario=document.getElementById('e-prontuario').value;
+  p.c1=document.getElementById('e-c1').checked;p.c2=document.getElementById('e-c2').checked;
+  p.c15=document.getElementById('e-c15').checked;p.c30=document.getElementById('e-c30').checked;
+  fbSet(editSheet+'/'+editIdx,p,function(){showToast('✅ Salvo!','green');});renderAll();closeEditModal();
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────────────────
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+  document.querySelectorAll('.page').forEach(function(s){s.classList.remove('active');});
+  document.getElementById('tab-'+name).classList.add('active');
+  document.getElementById(name).classList.add('active');
+  if(name==='analytics'){analyticsYear=new Date().getFullYear();document.getElementById('year-display').textContent=analyticsYear;renderAnalytics();}
+  if(name==='hoje')renderHoje();
+  if(name==='churn')renderChurn();
+}
+function filterTable(sheet,q){q=q.toLowerCase();document.querySelectorAll('#body-'+sheet+' tr').forEach(function(tr){if(tr.classList.contains('empty-row'))return;tr.style.display=tr.textContent.toLowerCase().includes(q)?'':'none';});}
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function showToast(msg,type){var t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type||'');t.classList.add('show');setTimeout(function(){t.classList.remove('show');},3500);}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',function(){
+  var d=new Date();
+  var dias=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  var label=dias[d.getDay()]+', '+d.toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+  document.getElementById('todayLabel').textContent=label;
+  var hojeEl=document.getElementById('data-hoje-label');if(hojeEl)hojeEl.textContent=label;
+  ['modal-novo','modal-edit','modal-internar','modal-alta','modal-hist'].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
+  });
+  var saved=localStorage.getItem('intervet_fb_url');
+  if(saved){FB_URL=saved;document.getElementById('setup-screen').classList.add('hidden');iniciarApp();}
+});
+function iniciarApp(){
+  var loaded=0;
+  SHEETS.forEach(function(s){fbGet(s,function(err,d){
+    if(!err){data[s]=d||{};setSyncStatus('online');}else setSyncStatus('offline');
+    loaded++;if(loaded===SHEETS.length){renderAll();startPolling();}
+  });});
+}
+</script>
+</body>
+</html>
